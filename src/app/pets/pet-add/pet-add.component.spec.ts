@@ -34,7 +34,7 @@ import {Observable, of} from 'rxjs';
 import {Pet} from '../pet';
 import {OwnerService} from '../../owners/owner.service';
 import {PetTypeService} from '../../pettypes/pettype.service';
-import {MatMomentDateModule} from '@angular/material-moment-adapter';
+import {MatDateFnsModule} from '@angular/material-date-fns-adapter';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import {Owner} from '../../owners/owner';
 import {PetType} from '../../pettypes/pettype';
@@ -67,17 +67,16 @@ describe('PetAddComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [PetAddComponent],
-      schemas: [CUSTOM_ELEMENTS_SCHEMA],
-      imports: [FormsModule, MatDatepickerModule, MatMomentDateModule],
-      providers: [
-        {provide: PetService, useClass: PetServiceStub},
-        {provide: OwnerService, useClass: OwnerServiceStub},
-        {provide: PetTypeService, useClass: PetTypeServiceStub},
-        {provide: Router, useClass: RouterStub},
-        {provide: ActivatedRoute, useClass: ActivatedRouteStub}
-      ]
-    })
+    schemas: [CUSTOM_ELEMENTS_SCHEMA],
+    imports: [FormsModule, MatDatepickerModule, MatDateFnsModule, PetAddComponent],
+    providers: [
+        { provide: PetService, useClass: PetServiceStub },
+        { provide: OwnerService, useClass: OwnerServiceStub },
+        { provide: PetTypeService, useClass: PetTypeServiceStub },
+        { provide: Router, useClass: RouterStub },
+        { provide: ActivatedRoute, useClass: ActivatedRouteStub }
+    ]
+})
       .compileComponents();
   }));
 

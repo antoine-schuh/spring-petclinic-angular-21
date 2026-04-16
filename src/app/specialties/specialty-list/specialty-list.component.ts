@@ -20,54 +20,51 @@
  * @author Vitaliy Fedoriv
  */
 
-import {Component, OnInit} from '@angular/core';
-import {Specialty} from '../specialty';
-import {SpecialtyService} from '../specialty.service';
-import {Router} from '@angular/router';
-import { finalize } from 'rxjs/operators';
+import { Component, computed, inject, linkedSignal, signal } from '@angular/core';
+import { rxResource } from '@angular/core/rxjs-interop';
+import { Specialty } from '../specialty';
+import { SpecialtyService } from '../specialty.service';
+import { Router } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { SpecialtyAddComponent } from '../specialty-add/specialty-add.component';
 
 @Component({
   selector: 'app-specialty-list',
   templateUrl: './specialty-list.component.html',
-  styleUrls: ['./specialty-list.component.css']
+  styleUrls: ['./specialty-list.component.css'],
+  imports: [FormsModule, SpecialtyAddComponent],
 })
-export class SpecialtyListComponent implements OnInit {
-  specialties: Specialty[];
-  errorMessage: string;
+export class SpecialtyListComponent {
+  private specService = inject(SpecialtyService);
+  private router = inject(Router);
+
+  specResource = rxResource<Specialty[], void>({
+    stream: () => this.specService.getSpecialties(),
+  });
+
+  specialties = linkedSignal<Specialty[]>(() => this.specResource.value() ?? []);
+  isSpecialitiesDataReceived = computed(() => !this.specResource.isLoading());
+  errorMessage = '';
   responseStatus: number;
-  isInsert = false;
-  isSpecialitiesDataReceived: boolean = false;
-
-  constructor(private specService: SpecialtyService, private router: Router) {
-    this.specialties = [];
-  }
-
-  ngOnInit() {
-    this.specService.getSpecialties().pipe(
-      finalize(() => {
-        this.isSpecialitiesDataReceived = true;
-      })
-    ).subscribe(
-      specialties => this.specialties = specialties,
-      error => this.errorMessage = error as any);
-  }
+  isInsert = signal(false);
 
   deleteSpecialty(specialty: Specialty) {
-    this.specService.deleteSpecialty(specialty.id.toString()).subscribe(
-      response => {
+    this.specService.deleteSpecialty(specialty.id.toString()).subscribe({
+      next: (response) => {
         this.responseStatus = response;
-        this.specialties = this.specialties.filter(currentItem => !(currentItem.id === specialty.id));
+        this.specialties.update(v => v.filter(item => item.id !== specialty.id));
       },
-      error => this.errorMessage = error as any);
+      error: (error) => (this.errorMessage = error as any),
+    });
   }
 
   onNewSpecialty(newSpecialty: Specialty) {
-    this.specialties.push(newSpecialty);
+    this.specialties.update(v => [...v, newSpecialty]);
     this.showAddSpecialtyComponent();
   }
 
   showAddSpecialtyComponent() {
-    this.isInsert = !this.isInsert;
+    this.isInsert.update(v => !v);
   }
 
   showEditSpecialtyComponent(updatedSpecialty: Specialty) {
@@ -77,5 +74,4 @@ export class SpecialtyListComponent implements OnInit {
   gotoHome() {
     this.router.navigate(['/welcome']);
   }
-
 }

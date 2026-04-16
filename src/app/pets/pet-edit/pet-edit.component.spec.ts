@@ -35,7 +35,7 @@ import {ActivatedRouteStub, RouterStub} from '../../testing/router-stubs';
 import {Pet} from '../pet';
 import {Observable, of} from 'rxjs';
 import { MatDatepickerModule } from '@angular/material/datepicker';
-import {MatMomentDateModule} from '@angular/material-moment-adapter';
+import {MatDateFnsModule} from '@angular/material-date-fns-adapter';
 import {PetType} from '../../pettypes/pettype';
 import Spy = jasmine.Spy;
 
@@ -67,17 +67,16 @@ describe('PetEditComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [PetEditComponent],
-      schemas: [CUSTOM_ELEMENTS_SCHEMA],
-      imports: [FormsModule, MatDatepickerModule, MatMomentDateModule],
-      providers: [
-        {provide: PetService, useClass: PetServiceStub},
-        {provide: OwnerService, useClass: OwnerServiceStub},
-        {provide: PetTypeService, useClass: PetTypeServiceStub},
-        {provide: Router, useClass: RouterStub},
-        {provide: ActivatedRoute, useClass: ActivatedRouteStub}
-      ]
-    })
+    schemas: [CUSTOM_ELEMENTS_SCHEMA],
+    imports: [FormsModule, MatDatepickerModule, MatDateFnsModule, PetEditComponent],
+    providers: [
+        { provide: PetService, useClass: PetServiceStub },
+        { provide: OwnerService, useClass: OwnerServiceStub },
+        { provide: PetTypeService, useClass: PetTypeServiceStub },
+        { provide: Router, useClass: RouterStub },
+        { provide: ActivatedRoute, useClass: ActivatedRouteStub }
+    ]
+})
       .compileComponents();
   }));
 

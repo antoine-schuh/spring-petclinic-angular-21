@@ -21,7 +21,7 @@
  */
 
 import {Injectable} from '@angular/core';
-import {HttpErrorResponse} from '@angular/common/http';
+import { HttpErrorResponse } from '@angular/common/http';
 
 import {Observable, throwError} from 'rxjs';
 
@@ -30,7 +30,7 @@ export type HandleError =
   <T> (operation?: string, result?: T) => (error: HttpErrorResponse) => Observable<T>;
 
 /** Handles HttpClient errors */
-@Injectable()
+@Injectable({ providedIn: 'root' })
 export class HttpErrorHandler {
 
   /** Create curried handleError function that already knows the service name */
@@ -62,7 +62,7 @@ export class HttpErrorHandler {
       console.error(error);
       console.error(`${serviceName}::${operation} failed: ${message}`);
 
-      return throwError(message);
+      return throwError(() => message);
     };
 
   }

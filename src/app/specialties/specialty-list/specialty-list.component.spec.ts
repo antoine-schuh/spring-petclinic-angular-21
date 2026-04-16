@@ -31,7 +31,7 @@ import {SpecialtyService} from '../specialty.service';
 import {Specialty} from '../specialty';
 import {ActivatedRoute, Router} from '@angular/router';
 import {ActivatedRouteStub, RouterStub} from '../../testing/router-stubs';
-import {Observable, of} from 'rxjs/index';
+import {Observable, of} from 'rxjs';
 import Spy = jasmine.Spy;
 
 class SpecialityServiceStub {
@@ -54,15 +54,14 @@ describe('SpecialtyListComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [SpecialtyListComponent],
-      schemas: [CUSTOM_ELEMENTS_SCHEMA],
-      imports: [FormsModule],
-      providers: [
-        {provide: SpecialtyService, useClass: SpecialityServiceStub},
-        {provide: Router, useClass: RouterStub},
-        {provide: ActivatedRoute, useClass: ActivatedRouteStub}
-      ]
-    })
+    schemas: [CUSTOM_ELEMENTS_SCHEMA],
+    imports: [FormsModule, SpecialtyListComponent],
+    providers: [
+        { provide: SpecialtyService, useClass: SpecialityServiceStub },
+        { provide: Router, useClass: RouterStub },
+        { provide: ActivatedRoute, useClass: ActivatedRouteStub }
+    ]
+})
       .compileComponents();
   }));
 
@@ -76,7 +75,7 @@ describe('SpecialtyListComponent', () => {
 
     specialtyService = fixture.debugElement.injector.get(SpecialtyService);
     responseStatus = 204; // success delete return NO_CONTENT
-    component.specialties = testSpecialties;
+    component.specialties.set(testSpecialties);
 
     spy = spyOn(specialtyService, 'deleteSpecialty')
       .and.returnValue(of(responseStatus));
@@ -90,7 +89,7 @@ describe('SpecialtyListComponent', () => {
 
   it('should call deleteSpecialty() method', () => {
     fixture.detectChanges();
-    component.deleteSpecialty(component.specialties[0]);
+    component.deleteSpecialty(component.specialties()[0]);
     expect(spy.calls.any()).toBe(true, 'deleteSpecialty called');
   });
 

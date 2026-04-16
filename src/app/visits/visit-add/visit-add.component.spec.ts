@@ -33,21 +33,28 @@ import {ActivatedRoute, Router} from '@angular/router';
 import {ActivatedRouteStub, RouterStub} from '../../testing/router-stubs';
 import {Pet} from '../../pets/pet';
 import {Observable, of} from 'rxjs';
-import {MatMomentDateModule} from '@angular/material-moment-adapter';
+import {MatDateFnsModule} from '@angular/material-date-fns-adapter';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import Spy = jasmine.Spy;
 import {OwnerService} from '../../owners/owner.service';
 
 class PetServiceStub {
   addPet(pet: Pet): Observable<Pet> {
-    return of();
+    return of(pet);
   }
   getPetById(petId: string): Observable<Pet> {
-    return of();
+    return of({
+      id: 1, name: 'Leo', birthDate: '2010-09-07',
+      type: { id: 1, name: 'cat' }, ownerId: 1, owner: null, visits: null
+    } as any as Pet);
   }
 }
 
 class OwnerServiceStub {
+  getOwnerById(ownerId: number): Observable<any> {
+    return of({ id: 1, firstName: 'George', lastName: 'Franklin',
+      address: '110 W. Liberty St.', city: 'Madison', telephone: '6085551023', pets: null });
+  }
 }
 
 class VisitServiceStub {
@@ -63,17 +70,16 @@ describe('VisitAddComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [VisitAddComponent],
-      schemas: [CUSTOM_ELEMENTS_SCHEMA],
-      imports: [FormsModule, MatDatepickerModule, MatMomentDateModule],
-      providers: [
-        {provide: PetService, useClass: PetServiceStub},
-        {provide: VisitService, useClass: VisitServiceStub},
-        {provide: OwnerService, useClass: OwnerServiceStub},
-        {provide: Router, useClass: RouterStub},
-        {provide: ActivatedRoute, useClass: ActivatedRouteStub}
-      ]
-    })
+    schemas: [CUSTOM_ELEMENTS_SCHEMA],
+    imports: [FormsModule, MatDatepickerModule, MatDateFnsModule, VisitAddComponent],
+    providers: [
+        { provide: PetService, useClass: PetServiceStub },
+        { provide: VisitService, useClass: VisitServiceStub },
+        { provide: OwnerService, useClass: OwnerServiceStub },
+        { provide: Router, useClass: RouterStub },
+        { provide: ActivatedRoute, useClass: ActivatedRouteStub }
+    ]
+})
       .compileComponents();
   }));
 

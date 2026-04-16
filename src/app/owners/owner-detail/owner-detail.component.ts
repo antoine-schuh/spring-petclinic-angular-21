@@ -20,43 +20,41 @@
  * @author Vitaliy Fedoriv
  */
 
-import {Component, OnInit} from '@angular/core';
-import {OwnerService} from '../owner.service';
-import {ActivatedRoute, Router} from '@angular/router';
-import {Owner} from '../owner';
-
+import { Component, computed, inject } from '@angular/core';
+import { rxResource } from '@angular/core/rxjs-interop';
+import { OwnerService } from '../owner.service';
+import { ActivatedRoute, Router } from '@angular/router';
+import { Owner } from '../owner';
+import { PetListComponent } from '../../pets/pet-list/pet-list.component';
 
 @Component({
   selector: 'app-owner-detail',
   templateUrl: './owner-detail.component.html',
-  styleUrls: ['./owner-detail.component.css']
+  styleUrls: ['./owner-detail.component.css'],
+  imports: [PetListComponent],
 })
-export class OwnerDetailComponent implements OnInit {
-  errorMessage: string;
-  owner: Owner;
+export class OwnerDetailComponent {
+  private route = inject(ActivatedRoute);
+  private router = inject(Router);
+  private ownerService = inject(OwnerService);
 
-  constructor(private route: ActivatedRoute, private router: Router, private ownerService: OwnerService) {
-    this.owner = {} as Owner;
-  }
+  private ownerId = this.route.snapshot.params.id;
 
-  ngOnInit() {
-    const ownerId = this.route.snapshot.params.id;
-    this.ownerService.getOwnerById(ownerId).subscribe(
-      owner => this.owner = owner,
-      error => this.errorMessage = error as any);
-  }
+  ownerResource = rxResource<Owner, void>({
+    stream: () => this.ownerService.getOwnerById(this.ownerId),
+  });
+
+  owner = computed(() => this.ownerResource.value() ?? ({} as Owner));
 
   gotoOwnersList() {
     this.router.navigate(['/owners']);
   }
 
   editOwner() {
-    this.router.navigate(['/owners', this.owner.id, 'edit']);
+    this.router.navigate(['/owners', this.owner().id, 'edit']);
   }
 
   addPet(owner: Owner) {
     this.router.navigate(['/owners', owner.id, 'pets', 'add']);
   }
-
-
 }

@@ -22,19 +22,16 @@
  * @author Vitaliy Fedoriv
  */
 
-import { async, ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { OwnerAddComponent } from './owner-add.component';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { OwnerService } from '../owner.service';
-import { RouterTestingModule } from '@angular/router/testing';
 import { RouterStub } from '../../testing/router-stubs';
 import { Owner } from '../owner';
 import { Observable, of } from 'rxjs';
 import { By } from '@angular/platform-browser';
-import { OwnersRoutingModule } from '../owners-routing.module';
-import { OwnerListComponent } from '../owner-list/owner-list.component';
 
 class OwnserServiceStub {
   addOwner(owner: Owner): Observable<Owner> {
@@ -49,28 +46,26 @@ describe('OwnerAddComponent', () => {
   beforeEach(
     waitForAsync(() => {
       TestBed.configureTestingModule({
-        declarations: [OwnerAddComponent],
-        schemas: [CUSTOM_ELEMENTS_SCHEMA],
-        imports: [FormsModule, RouterTestingModule],
-        providers: [
-          { provide: OwnerService, useClass: OwnserServiceStub },
-          { provide: Router, useClass: RouterStub },
-        ],
-      }).compileComponents();
+    schemas: [CUSTOM_ELEMENTS_SCHEMA],
+    imports: [FormsModule, OwnerAddComponent],
+    providers: [
+        { provide: OwnerService, useClass: OwnserServiceStub },
+        { provide: Router, useClass: RouterStub },
+    ],
+}).compileComponents();
     })
   );
 
   beforeEach(
     waitForAsync(() => {
       TestBed.configureTestingModule({
-        declarations: [OwnerAddComponent],
-        schemas: [CUSTOM_ELEMENTS_SCHEMA],
-        imports: [FormsModule, RouterTestingModule],
-        providers: [
-          { provide: OwnerService, useClass: OwnserServiceStub },
-          { provide: Router, useClass: RouterStub },
-        ],
-      }).compileComponents();
+    schemas: [CUSTOM_ELEMENTS_SCHEMA],
+    imports: [FormsModule, OwnerAddComponent],
+    providers: [
+        { provide: OwnerService, useClass: OwnserServiceStub },
+        { provide: Router, useClass: RouterStub },
+    ],
+}).compileComponents();
     })
   );
 
@@ -78,7 +73,7 @@ describe('OwnerAddComponent', () => {
     fixture = TestBed.createComponent(OwnerAddComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
-    router=TestBed.get(Router);
+    router=TestBed.inject(Router);
     spyOn(router,'navigate');
   });
 
@@ -88,7 +83,7 @@ describe('OwnerAddComponent', () => {
 
   
 
-  it('back button routing', async() => {
+  it('back button routing', () => {
     let buttons = fixture.debugElement.queryAll(By.css('button'));
     let backbutton = buttons[0];
     backbutton.triggerEventHandler('click', null);
@@ -96,13 +91,13 @@ describe('OwnerAddComponent', () => {
     expect(router.navigate).toHaveBeenCalledWith(['/owners']);
   });
 
- 
-  it('add owner', async(() => {
+
+  it('add owner', () => {
     let buttons = fixture.debugElement.queryAll(By.css('button'));
     let addOwnerButton = buttons[1].nativeElement;
     spyOn(component, 'onSubmit');
     addOwnerButton.click();
     expect(component.onSubmit).toHaveBeenCalled();
-  }));
+  });
 
 });

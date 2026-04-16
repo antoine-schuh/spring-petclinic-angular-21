@@ -1,53 +1,48 @@
-import {Component, OnInit} from '@angular/core';
-import {PetType} from '../pettype';
-import {Router} from '@angular/router';
-import {PetTypeService} from '../pettype.service';
-import {Specialty} from '../../specialties/specialty';
-import { finalize } from 'rxjs/operators';
+import { Component, computed, inject, linkedSignal, signal } from '@angular/core';
+import { rxResource } from '@angular/core/rxjs-interop';
+import { PetType } from '../pettype';
+import { Router } from '@angular/router';
+import { PetTypeService } from '../pettype.service';
+import { FormsModule } from '@angular/forms';
+import { PettypeAddComponent } from '../pettype-add/pettype-add.component';
 
 @Component({
   selector: 'app-pettype-list',
   templateUrl: './pettype-list.component.html',
-  styleUrls: ['./pettype-list.component.css']
+  styleUrls: ['./pettype-list.component.css'],
+  imports: [FormsModule, PettypeAddComponent],
 })
-export class PettypeListComponent implements OnInit {
-  pettypes: PetType[];
-  errorMessage: string;
+export class PettypeListComponent {
+  private pettypeService = inject(PetTypeService);
+  private router = inject(Router);
+
+  pettypeResource = rxResource<PetType[], void>({
+    stream: () => this.pettypeService.getPetTypes(),
+  });
+
+  pettypes = linkedSignal<PetType[]>(() => this.pettypeResource.value() ?? []);
+  isPetTypesDataReceived = computed(() => !this.pettypeResource.isLoading());
+  errorMessage = '';
   responseStatus: number;
-  isPetTypesDataReceived: boolean = false;
-  isInsert = false;
-
-  constructor(private pettypeService: PetTypeService, private router: Router) {
-    this.pettypes = [] as PetType[];
-  }
-
-  ngOnInit() {
-    this.pettypeService.getPetTypes().pipe(
-      finalize(() => {
-        this.isPetTypesDataReceived = true;
-      })
-    ).subscribe(
-      pettypes => this.pettypes = pettypes,
-      error => this.errorMessage = error as any
-      );
-  }
+  isInsert = signal(false);
 
   deletePettype(pettype: PetType) {
-    this.pettypeService.deletePetType(pettype.id.toString()).subscribe(
-      response => {
+    this.pettypeService.deletePetType(pettype.id.toString()).subscribe({
+      next: (response) => {
         this.responseStatus = response;
-        this.pettypes = this.pettypes.filter(currentItem => !(currentItem.id === pettype.id));
+        this.pettypes.update(v => v.filter(item => item.id !== pettype.id));
       },
-      error => this.errorMessage = error as any);
+      error: (error) => (this.errorMessage = error as any),
+    });
   }
 
-  onNewPettype(newPetType: Specialty) {
-    this.pettypes.push(newPetType);
+  onNewPettype(newPetType: PetType) {
+    this.pettypes.update(v => [...v, newPetType]);
     this.showAddPettypeComponent();
   }
 
   showAddPettypeComponent() {
-    this.isInsert = !this.isInsert;
+    this.isInsert.update(v => !v);
   }
 
   showEditPettypeComponent(updatedPetType: PetType) {

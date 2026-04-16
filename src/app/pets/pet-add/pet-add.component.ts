@@ -20,68 +20,85 @@
  * @author Vitaliy Fedoriv
  */
 
+import { Component, computed, inject, signal } from '@angular/core';
+import { provideNativeDateAdapter } from '@angular/material/core';
+import { rxResource } from '@angular/core/rxjs-interop';
+import { Pet } from '../pet';
+import { PetType } from '../../pettypes/pettype';
+import { Owner } from '../../owners/owner';
+import { ActivatedRoute, Router } from '@angular/router';
+import { PetTypeService } from '../../pettypes/pettype.service';
+import { PetService } from '../pet.service';
+import { OwnerService } from '../../owners/owner.service';
 
-import {Component, Input, OnInit} from '@angular/core';
-import {Pet} from '../pet';
-import {PetType} from '../../pettypes/pettype';
-import {Owner} from '../../owners/owner';
-import {ActivatedRoute, Router} from '@angular/router';
-import {PetTypeService} from '../../pettypes/pettype.service';
-import {PetService} from '../pet.service';
-import {OwnerService} from '../../owners/owner.service';
-
-import * as moment from 'moment';
+import { format } from 'date-fns';
+import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  MatDatepickerInput,
+  MatDatepickerToggle,
+  MatDatepicker,
+} from '@angular/material/datepicker';
 
 @Component({
   selector: 'app-pet-add',
   templateUrl: './pet-add.component.html',
-  styleUrls: ['./pet-add.component.css']
+  styleUrls: ['./pet-add.component.css'],
+  providers: [provideNativeDateAdapter()],
+  imports: [
+    ReactiveFormsModule,
+    MatDatepickerInput,
+    MatDatepickerToggle,
+    MatDatepicker,
+  ],
 })
-export class PetAddComponent implements OnInit {
-  pet: Pet;
-  @Input() currentType: PetType;
-  currentOwner: Owner;
-  petTypes: PetType[];
-  addedSuccess = false;
-  errorMessage: string;
+export class PetAddComponent {
+  private ownerService = inject(OwnerService);
+  private petService = inject(PetService);
+  private petTypeService = inject(PetTypeService);
+  private router = inject(Router);
+  private route = inject(ActivatedRoute);
+  private fb = inject(FormBuilder);
 
-  constructor(private ownerService: OwnerService, private petService: PetService,
-              private petTypeService: PetTypeService, private router: Router, private route: ActivatedRoute) {
-    this.pet = {} as Pet;
-    this.currentOwner = {} as Owner;
-    this.currentType = {} as PetType;
-    this.petTypes = [];
-  }
+  private ownerId = this.route.snapshot.params.id;
 
-  ngOnInit() {
-    this.petTypeService.getPetTypes().subscribe(
-      pettypes => this.petTypes = pettypes,
-      error => this.errorMessage = error as any);
+  private petTypesResource = rxResource<PetType[], void>({
+    stream: () => this.petTypeService.getPetTypes(),
+  });
+  petTypes = computed(() => this.petTypesResource.value() ?? []);
 
-    const ownerId = this.route.snapshot.params.id;
-    this.ownerService.getOwnerById(ownerId).subscribe(
-      response => {
-        this.currentOwner = response;
-      },
-      error => this.errorMessage = error as any);
-  }
+  private ownerResource = rxResource<Owner, void>({
+    stream: () => this.ownerService.getOwnerById(this.ownerId),
+  });
+  currentOwner = computed(() => this.ownerResource.value() ?? ({} as Owner));
 
-  onSubmit(pet: Pet) {
-    pet.id = null;
-    pet.owner = this.currentOwner;
-    // format output from datepicker to short string yyyy-mm-dd format (rfc3339)
-    pet.birthDate = moment(pet.birthDate).format('YYYY-MM-DD');
-    this.petService.addPet(pet).subscribe(
-      newPet => {
-        this.pet = newPet;
-        this.addedSuccess = true;
-        this.gotoOwnerDetail();
-      },
-      error => this.errorMessage = error as any);
+  errorMessage = signal('');
+
+  nameCtrl      = new FormControl<string>('', [Validators.required, Validators.minLength(1), Validators.maxLength(30), Validators.pattern('^[A-Za-z0-9].{0,29}$')]);
+  birthDateCtrl = new FormControl<Date | null>(null, [Validators.required]);
+  typeCtrl      = new FormControl<number | null>(null, [Validators.required]);
+
+  form = this.fb.group({
+    name:      this.nameCtrl,
+    birthDate: this.birthDateCtrl,
+    type:      this.typeCtrl,
+  });
+
+  onSubmit() {
+    const fv = this.form.value;
+    const pet = {
+      id: null,
+      name: fv.name,
+      birthDate: format(new Date(fv.birthDate!), 'yyyy-MM-dd'),
+      type: this.petTypes().find(t => t.id === Number(fv.type)),
+      owner: this.currentOwner(),
+    } as unknown as Pet;
+    this.petService.addPet(pet).subscribe({
+      next: () => this.gotoOwnerDetail(),
+      error: (error) => this.errorMessage.set(error as any),
+    });
   }
 
   gotoOwnerDetail() {
-    this.router.navigate(['/owners', this.currentOwner.id]);
+    this.router.navigate(['/owners', this.currentOwner().id]);
   }
-
 }

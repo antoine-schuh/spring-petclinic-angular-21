@@ -20,50 +20,61 @@
  * @author Vitaliy Fedoriv
  */
 
-import {Component, OnInit} from '@angular/core';
-import {Specialty} from '../../specialties/specialty';
-import {SpecialtyService} from 'app/specialties/specialty.service';
-import {Vet} from '../vet';
-import {Router} from '@angular/router';
-import {VetService} from '../vet.service';
+import { Component, computed, inject, signal } from '@angular/core';
+import { rxResource } from '@angular/core/rxjs-interop';
+import { Specialty } from '../../specialties/specialty';
+import { SpecialtyService } from 'app/specialties/specialty.service';
+import { Vet } from '../vet';
+import { Router } from '@angular/router';
+import { VetService } from '../vet.service';
+import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
+import { MatFormField, MatSelect, MatOption } from '@angular/material/select';
 
 @Component({
   selector: 'app-vet-add',
   templateUrl: './vet-add.component.html',
-  styleUrls: ['./vet-add.component.css']
+  styleUrls: ['./vet-add.component.css'],
+  imports: [ReactiveFormsModule, MatFormField, MatSelect, MatOption],
 })
-export class VetAddComponent implements OnInit {
-  vet: Vet;
-  specialtiesList: Specialty[];
-  selectedSpecialty: Specialty;
-  errorMessage: string;
+export class VetAddComponent {
+  private specialtyService = inject(SpecialtyService);
+  private vetService = inject(VetService);
+  private router = inject(Router);
+  private fb = inject(FormBuilder);
 
-  constructor(private specialtyService: SpecialtyService, private vetService: VetService, private router: Router) {
-    this.vet = {} as Vet;
-    this.selectedSpecialty = {} as Specialty;
-    this.specialtiesList = [];
+  specialtiesResource = rxResource<Specialty[], void>({
+    stream: () => this.specialtyService.getSpecialties(),
+  });
+
+  specialtiesList = computed(() => this.specialtiesResource.value() ?? []);
+  errorMessage = signal('');
+
+  firstNameCtrl   = new FormControl<string>('', [Validators.required, Validators.minLength(1), Validators.maxLength(30), Validators.pattern('^[a-zA-Z]*$')]);
+  lastNameCtrl    = new FormControl<string>('', [Validators.required, Validators.minLength(1), Validators.maxLength(30), Validators.pattern('^[a-zA-Z]*$')]);
+  specialtiesCtrl = new FormControl<Specialty[]>([], []);
+
+  form = this.fb.group({
+    firstName:   this.firstNameCtrl,
+    lastName:    this.lastNameCtrl,
+    specialties: this.specialtiesCtrl,
+  });
+
+  compareSpecFn(c1: Specialty, c2: Specialty): boolean {
+    return c1 && c2 ? c1.id === c2.id : c1 === c2;
   }
 
-  ngOnInit() {
-    this.specialtyService.getSpecialties().subscribe(
-      specialties => this.specialtiesList = specialties,
-      error => this.errorMessage = error as any
-    );
-  }
-
-  onSubmit(vet: Vet) {
-    vet.id = null;
-    vet.specialties = [];
-    if (this.selectedSpecialty.id !== undefined) {
-      vet.specialties.push(this.selectedSpecialty);
-    }
-    this.vetService.addVet(vet).subscribe(
-      newVet => {
-        this.vet = newVet;
-        this.gotoVetList();
-      },
-      error => this.errorMessage = error as any
-    );
+  onSubmit() {
+    const fv = this.form.value;
+    const vet = {
+      id: null,
+      firstName:   fv.firstName,
+      lastName:    fv.lastName,
+      specialties: fv.specialties ?? [],
+    } as unknown as Vet;
+    this.vetService.addVet(vet).subscribe({
+      next: () => this.gotoVetList(),
+      error: (error) => this.errorMessage.set(error as any),
+    });
   }
 
   gotoVetList() {

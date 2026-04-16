@@ -20,37 +20,34 @@
  * @author Vitaliy Fedoriv
  */
 
-import {Component, OnInit} from '@angular/core';
-import {OwnerService} from '../owner.service';
-import {Owner} from '../owner';
-import {Router} from '@angular/router';
-import { finalize } from 'rxjs/operators';
+import { Component, computed, inject, signal } from '@angular/core';
+import { rxResource } from '@angular/core/rxjs-interop';
+import { OwnerService } from '../owner.service';
+import { Owner } from '../owner';
+import { Router, RouterLinkActive, RouterLink } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-owner-list',
   templateUrl: './owner-list.component.html',
-  styleUrls: ['./owner-list.component.css']
+  styleUrls: ['./owner-list.component.css'],
+  imports: [FormsModule, RouterLinkActive, RouterLink],
 })
-export class OwnerListComponent implements OnInit {
-  errorMessage: string;
-  lastName: string;
-  owners: Owner[];
-  listOfOwnersWithLastName: Owner[];
-  isOwnersDataReceived: boolean = false;
+export class OwnerListComponent {
+  private router = inject(Router);
+  private ownerService = inject(OwnerService);
 
-  constructor(private router: Router, private ownerService: OwnerService) {
+  lastName = '';
+  private searchKey = signal('');
 
-  }
+  ownersResource = rxResource<Owner[], string>({
+    params: () => this.searchKey(),
+    stream: ({ params: key }) =>
+      key === '' ? this.ownerService.getOwners() : this.ownerService.searchOwners(key),
+  });
 
-  ngOnInit() {
-    this.ownerService.getOwners().pipe(
-      finalize(() => {
-        this.isOwnersDataReceived = true;
-      })
-    ).subscribe(
-      owners => this.owners = owners,
-      error => this.errorMessage = error as any);
-  }
+  owners = computed(() => this.ownersResource.value() ?? null);
+  isOwnersDataReceived = computed(() => !this.ownersResource.isLoading());
 
   onSelect(owner: Owner) {
     this.router.navigate(['/owners', owner.id]);
@@ -60,35 +57,7 @@ export class OwnerListComponent implements OnInit {
     this.router.navigate(['/owners/add']);
   }
 
-  searchByLastName(lastName: string)
-  {
-      console.log('inside search by last name starting with ' + (lastName));
-      if (lastName === '')
-      {
-      this.ownerService.getOwners()
-      .subscribe(
-            (owners) => {
-             this.owners = owners;
-            });
-      }
-      if (lastName !== '')
-      {
-      this.ownerService.searchOwners(lastName)
-      .subscribe(
-      (owners) => {
-
-       this.owners = owners;
-       console.log('this.owners ' + this.owners);
-
-       },
-       (error) =>
-       {
-         this.owners = null;
-       }
-      );
-
-      }
+  searchByLastName(lastName: string) {
+    this.searchKey.set(lastName);
   }
-
-
 }

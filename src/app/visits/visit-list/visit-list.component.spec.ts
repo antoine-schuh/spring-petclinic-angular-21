@@ -52,15 +52,14 @@ describe('VisitListComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [VisitListComponent],
-      schemas: [CUSTOM_ELEMENTS_SCHEMA],
-      imports: [FormsModule],
-      providers: [
-        {provide: VisitService, useClass: VisitServiceStub},
-        {provide: Router, useClass: RouterStub},
-        {provide: ActivatedRoute, useClass: ActivatedRouteStub}
-      ]
-    })
+    schemas: [CUSTOM_ELEMENTS_SCHEMA],
+    imports: [FormsModule, VisitListComponent],
+    providers: [
+        { provide: VisitService, useClass: VisitServiceStub },
+        { provide: Router, useClass: RouterStub },
+        { provide: ActivatedRoute, useClass: ActivatedRouteStub }
+    ]
+})
       .compileComponents();
   }));
 
@@ -93,7 +92,7 @@ describe('VisitListComponent', () => {
 
     visitService = fixture.debugElement.injector.get(VisitService);
     responseStatus = 204; // success delete return NO_CONTENT
-    component.visits = testVisits;
+    fixture.componentRef.setInput('visits', testVisits);
 
     spy = spyOn(visitService, 'deleteVisit')
       .and.returnValue(of(responseStatus));
@@ -107,7 +106,7 @@ describe('VisitListComponent', () => {
 
   it('should call deleteVisit() method', () => {
     fixture.detectChanges();
-    component.deleteVisit(component.visits[0]);
+    component.deleteVisit(component.localVisits()[0]);
     expect(spy.calls.any()).toBe(true, 'deleteVisit called');
   });
 

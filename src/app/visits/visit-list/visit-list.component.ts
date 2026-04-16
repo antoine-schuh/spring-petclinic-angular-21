@@ -20,45 +20,35 @@
  * @author Vitaliy Fedoriv
  */
 
-import {Component, Input, OnInit} from '@angular/core';
-import {Visit} from '../visit';
-import {VisitService} from '../visit.service';
-import {Router} from '@angular/router';
+import { Component, computed, inject, input, linkedSignal } from '@angular/core';
+import { Visit } from '../visit';
+import { VisitService } from '../visit.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-visit-list',
   templateUrl: './visit-list.component.html',
-  styleUrls: ['./visit-list.component.css']
+  styleUrls: ['./visit-list.component.css'],
 })
-export class VisitListComponent implements OnInit {
+export class VisitListComponent {
+  private router = inject(Router);
+  private visitService = inject(VisitService);
 
-  @Input() visits: Visit[];
-  responseStatus: number;
-  noVisits = false;
-  errorMessage: string;
-
-  constructor(private router: Router, private visitService: VisitService) {
-    this.visits = [];
-  }
-
-  ngOnInit() {
-  }
+  visits = input<Visit[]>([]);
+  localVisits = linkedSignal(() => this.visits() ?? []);
+  noVisits = computed(() => this.localVisits().length === 0);
+  errorMessage = '';
 
   editVisit(visit: Visit) {
     this.router.navigate(['/visits', visit.id, 'edit']);
   }
 
   deleteVisit(visit: Visit) {
-    this.visitService.deleteVisit(visit.id.toString()).subscribe(
-      response => {
-        this.responseStatus = response;
-        console.log('delete success');
-        this.visits.splice(this.visits.indexOf(visit), 1 );
-        if (this.visits.length === 0) {
-            this.noVisits = true;
-          }
+    this.visitService.deleteVisit(visit.id.toString()).subscribe({
+      next: () => {
+        this.localVisits.update(v => v.filter(item => item.id !== visit.id));
       },
-      error => this.errorMessage = error as any);
+      error: (error) => (this.errorMessage = error as any),
+    });
   }
-
 }

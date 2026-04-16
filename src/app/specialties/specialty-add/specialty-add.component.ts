@@ -16,43 +16,43 @@
  *
  */
 
-import {
-  Component,
-  EventEmitter,
-  OnInit,
-  Output,
-  ViewChild,
-} from '@angular/core';
-import { NgForm } from '@angular/forms';
+import { Component, inject, output, signal } from '@angular/core';
 import { Specialty } from '../specialty';
 import { SpecialtyService } from '../specialty.service';
+import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 
 @Component({
   selector: 'app-specialty-add',
   templateUrl: './specialty-add.component.html',
   styleUrls: ['./specialty-add.component.css'],
+  imports: [ReactiveFormsModule],
 })
-export class SpecialtyAddComponent implements OnInit {
-  @ViewChild('specialityForm', { static: true }) specialityForm: NgForm;
-  speciality: Specialty;
-  addedSuccess = false;
-  errorMessage: string;
-  @Output() newSpeciality = new EventEmitter<Specialty>();
+export class SpecialtyAddComponent {
+  private specialtyService = inject(SpecialtyService);
+  private fb = inject(FormBuilder);
 
-  constructor(private specialtyService: SpecialtyService) {
-    this.speciality = {} as Specialty;
-  }
+  errorMessage = signal('');
+  newSpeciality = output<Specialty>();
 
-  ngOnInit() {}
+  nameCtrl = new FormControl<string>('', [
+    Validators.required,
+    Validators.minLength(1),
+    Validators.maxLength(80),
+    Validators.pattern('^[A-Za-z0-9].{0,79}$'),
+  ]);
 
-  onSubmit(specialty: Specialty) {
-    this.specialtyService.addSpecialty(specialty).subscribe(
-      (newSpecialty) => {
-        this.speciality = newSpecialty;
-        this.addedSuccess = true;
-        this.newSpeciality.emit(this.speciality);
+  form = this.fb.group({
+    name: this.nameCtrl,
+  });
+
+  onSubmit() {
+    const specialty = { id: null, name: this.form.value.name } as unknown as Specialty;
+    this.specialtyService.addSpecialty(specialty).subscribe({
+      next: (newSpecialty) => {
+        this.newSpeciality.emit(newSpecialty);
+        this.form.reset();
       },
-      (error) => (this.errorMessage = error as any)
-    );
+      error: (error) => this.errorMessage.set(error as any),
+    });
   }
 }

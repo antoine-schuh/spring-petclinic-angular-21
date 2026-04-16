@@ -32,13 +32,10 @@ import {ActivatedRoute} from '@angular/router';
 import {OwnerService} from '../owner.service';
 import {Owner} from '../owner';
 import {Observable, of} from 'rxjs';
-import {RouterTestingModule} from '@angular/router/testing';
+import {provideRouter} from '@angular/router';
 import {CommonModule} from '@angular/common';
-import {PartsModule} from '../../parts/parts.module';
 import {ActivatedRouteStub} from '../../testing/router-stubs';
 import {OwnerDetailComponent} from '../owner-detail/owner-detail.component';
-import {OwnersModule} from '../owners.module';
-import {DummyComponent} from '../../testing/dummy.component';
 import {OwnerAddComponent} from '../owner-add/owner-add.component';
 import {OwnerEditComponent} from '../owner-edit/owner-edit.component';
 import Spy = jasmine.Spy;
@@ -73,20 +70,14 @@ describe('OwnerListComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [DummyComponent],
-      schemas: [NO_ERRORS_SCHEMA],
-      imports: [CommonModule, FormsModule, PartsModule, OwnersModule,
-        RouterTestingModule.withRoutes(
-          [{path: 'owners', component: OwnerListComponent},
-            {path: 'owners/add', component: OwnerAddComponent},
-            {path: 'owners/:id', component: OwnerDetailComponent},
-            {path: 'owners/:id/edit', component: OwnerEditComponent}
-          ])],
-      providers: [
-        {provide: OwnerService, useValue: ownerService},
-        {provide: ActivatedRoute, useClass: ActivatedRouteStub}
-      ]
-    })
+    schemas: [NO_ERRORS_SCHEMA],
+    imports: [CommonModule, FormsModule, OwnerListComponent],
+    providers: [
+        { provide: OwnerService, useValue: ownerService },
+        { provide: ActivatedRoute, useClass: ActivatedRouteStub },
+        provideRouter([]),
+    ]
+})
       .compileComponents();
   }));
 
@@ -127,14 +118,12 @@ describe('OwnerListComponent', () => {
   });
 
 
-  it(' should show full name after getOwners observable (async) ', waitForAsync(() => {
+  it(' should show full name after getOwners observable (async) ', () => {
     fixture.detectChanges();
-    fixture.whenStable().then(() => { // wait for async getOwners
-      fixture.detectChanges();        // update view with name
-      de = fixture.debugElement.query(By.css('.ownerFullName'));
-      el = de.nativeElement;
-      expect(el.innerText).toBe((testOwner.firstName.toString() + ' ' + testOwner.lastName.toString()));
-    });
-  }));
+    fixture.detectChanges();
+    de = fixture.debugElement.query(By.css('.ownerFullName'));
+    el = de.nativeElement;
+    expect(el.innerText).toBe((testOwner.firstName.toString() + ' ' + testOwner.lastName.toString()));
+  });
 
 });

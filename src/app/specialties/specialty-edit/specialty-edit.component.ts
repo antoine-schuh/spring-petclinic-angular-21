@@ -16,46 +16,61 @@
  *
  */
 
-/**
- * @author Vitaliy Fedoriv
- */
-
-import {Component, OnInit} from '@angular/core';
-import {Specialty} from '../specialty';
-import {SpecialtyService} from '../specialty.service';
-import {ActivatedRoute, Router} from '@angular/router';
+import { Component, effect, inject, linkedSignal, signal } from '@angular/core';
+import { rxResource } from '@angular/core/rxjs-interop';
+import { Specialty } from '../specialty';
+import { SpecialtyService } from '../specialty.service';
+import { ActivatedRoute, Router } from '@angular/router';
+import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 
 @Component({
   selector: 'app-specialty-edit',
   templateUrl: './specialty-edit.component.html',
-  styleUrls: ['./specialty-edit.component.css']
+  styleUrls: ['./specialty-edit.component.css'],
+  imports: [ReactiveFormsModule],
 })
-export class SpecialtyEditComponent implements OnInit {
-  specialty: Specialty;
-  errorMessage: string;
+export class SpecialtyEditComponent {
+  private specialtyService = inject(SpecialtyService);
+  private route = inject(ActivatedRoute);
+  private router = inject(Router);
+  private fb = inject(FormBuilder);
 
-  constructor(private specialtyService: SpecialtyService, private route: ActivatedRoute, private router: Router) {
-    this.specialty = {} as Specialty;
+  private specId = this.route.snapshot.params.id;
+
+  private specialtyResource = rxResource<Specialty, void>({
+    stream: () => this.specialtyService.getSpecialtyById(this.specId),
+  });
+
+  specialty = linkedSignal<Specialty>(() => this.specialtyResource.value() ?? ({} as Specialty));
+  errorMessage = signal('');
+
+  nameCtrl = new FormControl<string>('', [
+    Validators.required,
+    Validators.minLength(1),
+    Validators.maxLength(80),
+    Validators.pattern('^[A-Za-z0-9].{0,79}$'),
+  ]);
+
+  form = this.fb.group({
+    name: this.nameCtrl,
+  });
+
+  constructor() {
+    effect(() => {
+      const s = this.specialty();
+      if (s.id) this.form.patchValue({ name: s.name });
+    });
   }
 
-  ngOnInit() {
-    const specId = this.route.snapshot.params.id;
-    this.specialtyService.getSpecialtyById(specId).subscribe(
-      specialty => this.specialty = specialty,
-      error => this.errorMessage = error as any);
+  onSubmit() {
+    const specialty: Specialty = { id: this.specialty().id, name: this.form.value.name! };
+    this.specialtyService.updateSpecialty(specialty.id.toString(), specialty).subscribe({
+      next: () => this.onBack(),
+      error: (error) => this.errorMessage.set(error as any),
+    });
   }
-
-  onSubmit(specialty: Specialty) {
-    this.specialtyService.updateSpecialty(specialty.id.toString(), specialty).subscribe(
-      res => {
-        console.log('update success');
-        this.onBack();
-      },
-      error => this.errorMessage = error as any);
- }
 
   onBack() {
     this.router.navigate(['/specialties']);
   }
-
 }
