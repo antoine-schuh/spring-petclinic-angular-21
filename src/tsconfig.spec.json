@@ -4,12 +4,12 @@
     "outDir": "../out-tsc/spec",
     "baseUrl": "./",
     "types": [
-      "jasmine",
-      "node"
+      "node",
+      "vitest/globals"
     ]
   },
   "files": [
-    "test.ts"
+    "../node_modules/vitest/globals.d.ts"
   ],
   "include": [
     "**/*.spec.ts",

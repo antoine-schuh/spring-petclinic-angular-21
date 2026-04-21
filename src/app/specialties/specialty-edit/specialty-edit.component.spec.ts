@@ -1,80 +1,70 @@
-/*
- *
- *  * Copyright 2017-2018 the original author or authors.
- *  *
- *  * Licensed under the Apache License, Version 2.0 (the "License");
- *  * you may not use this file except in compliance with the License.
- *  * You may obtain a copy of the License at
- *  *
- *  *      http://www.apache.org/licenses/LICENSE-2.0
- *  *
- *  * Unless required by applicable law or agreed to in writing, software
- *  * distributed under the License is distributed on an "AS IS" BASIS,
- *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  * See the License for the specific language governing permissions and
- *  * limitations under the License.
- *
- */
-
-/* tslint:disable:no-unused-variable */
-
-/**
- * @author Vitaliy Fedoriv
- */
-
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
-import {CUSTOM_ELEMENTS_SCHEMA} from '@angular/core';
+import {ComponentFixture, TestBed} from '@angular/core/testing';
+import {ActivatedRoute, provideRouter, Router} from '@angular/router';
+import {of, throwError} from 'rxjs';
 import {Specialty} from '../specialty';
-import {SpecialtyEditComponent} from './specialty-edit.component';
 import {SpecialtyService} from '../specialty.service';
-import {FormsModule} from '@angular/forms';
-import {ActivatedRoute, Router} from '@angular/router';
-import {ActivatedRouteStub, RouterStub} from '../../testing/router-stubs';
-import {Observable, of} from 'rxjs';
-import Spy = jasmine.Spy;
+import {SpecialtyEditComponent} from './specialty-edit.component';
 
-class SpecialityServiceStub {
-  getSpecialtyById(specId: string): Observable<Specialty> {
-    return of();
-  }
-}
+const MOCK: Specialty = {id: 1, name: 'Radiology'};
 
 describe('SpecialtyEditComponent', () => {
-  let component: SpecialtyEditComponent;
   let fixture: ComponentFixture<SpecialtyEditComponent>;
-  let specialtyService: SpecialtyService;
-  let spy: Spy;
-  let testSpecialty: Specialty;
+  let component: SpecialtyEditComponent;
+  let specService: { getSpecialtyById: ReturnType<typeof vi.fn>; updateSpecialty: ReturnType<typeof vi.fn> };
+  let router: Router;
 
-  beforeEach(waitForAsync(() => {
-    TestBed.configureTestingModule({
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
-    imports: [FormsModule, SpecialtyEditComponent],
-    providers: [
-        { provide: SpecialtyService, useClass: SpecialityServiceStub },
-        { provide: Router, useClass: RouterStub },
-        { provide: ActivatedRoute, useClass: ActivatedRouteStub }
-    ]
-})
-      .compileComponents();
-  }));
-
-  beforeEach(() => {
-    fixture = TestBed.createComponent(SpecialtyEditComponent);
-    component = fixture.componentInstance;
-    testSpecialty = {
-      id: 1,
-      name: 'test'
+  beforeEach(async () => {
+    specService = {
+      getSpecialtyById: vi.fn().mockReturnValue(of(MOCK)),
+      updateSpecialty: vi.fn(),
     };
 
-    specialtyService = fixture.debugElement.injector.get(SpecialtyService);
-    spy = spyOn(specialtyService, 'getSpecialtyById')
-      .and.returnValue(of(testSpecialty));
+    await TestBed.configureTestingModule({
+      imports: [SpecialtyEditComponent],
+      providers: [
+        {provide: SpecialtyService, useValue: specService},
+        {provide: ActivatedRoute, useValue: {snapshot: {params: {id: '1'}}}},
+        provideRouter([]),
+      ],
+    }).compileComponents();
 
+    fixture = TestBed.createComponent(SpecialtyEditComponent);
+    component = fixture.componentInstance;
+    router = TestBed.inject(Router);
     fixture.detectChanges();
   });
 
-  it('should create SpecialtyEditComponent', () => {
-    expect(component).toBeTruthy();
+  it('should create', () => expect(component).toBeTruthy());
+
+  it('loads specialty and patches form on init', () => {
+    expect(component.specialty()).toEqual(MOCK);
+    expect(component.form.value.name).toBe('Radiology');
+  });
+
+  describe('onSubmit', () => {
+    it('calls updateSpecialty', () => {
+      specService.updateSpecialty.mockReturnValue(of(MOCK));
+      component.onSubmit();
+      expect(specService.updateSpecialty).toHaveBeenCalledWith('1', MOCK);
+    });
+
+    it('navigates to /specialties on success', () => {
+      specService.updateSpecialty.mockReturnValue(of(MOCK));
+      const spy = vi.spyOn(router, 'navigate');
+      component.onSubmit();
+      expect(spy).toHaveBeenCalledWith(['/specialties']);
+    });
+
+    it('sets errorMessage on error', () => {
+      specService.updateSpecialty.mockReturnValue(throwError(() => 'Error'));
+      component.onSubmit();
+      expect(component.errorMessage()).toBe('Error');
+    });
+  });
+
+  it('onBack() navigates to /specialties', () => {
+    const spy = vi.spyOn(router, 'navigate');
+    component.onBack();
+    expect(spy).toHaveBeenCalledWith(['/specialties']);
   });
 });

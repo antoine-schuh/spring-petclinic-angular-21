@@ -1,94 +1,84 @@
-/*
- *
- *  * Copyright 2016-2017 the original author or authors.
- *  *
- *  * Licensed under the Apache License, Version 2.0 (the "License");
- *  * you may not use this file except in compliance with the License.
- *  * You may obtain a copy of the License at
- *  *
- *  *      http://www.apache.org/licenses/LICENSE-2.0
- *  *
- *  * Unless required by applicable law or agreed to in writing, software
- *  * distributed under the License is distributed on an "AS IS" BASIS,
- *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  * See the License for the specific language governing permissions and
- *  * limitations under the License.
- *
- */
+import {ComponentFixture, TestBed} from '@angular/core/testing';
+import {ActivatedRoute, provideRouter, Router} from '@angular/router';
+import {of, throwError} from 'rxjs';
+import {Owner} from '../owner';
+import {OwnerService} from '../owner.service';
+import {OwnerEditComponent} from './owner-edit.component';
 
-/* tslint:disable:no-unused-variable */
-
-/**
- * @author Vitaliy Fedoriv
- */
-
-import {
-  ComponentFixture,
-  TestBed,
-  waitForAsync,
-} from '@angular/core/testing';
-import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
-import { OwnerEditComponent } from './owner-edit.component';
-import { FormsModule } from '@angular/forms';
-import { provideRouter } from '@angular/router';
-import { OwnerService } from '../owner.service';
-import { ActivatedRoute, Router } from '@angular/router';
-import { ActivatedRouteStub, RouterStub } from '../../testing/router-stubs';
-import { Owner } from '../owner';
-import { Observable, of } from 'rxjs';
-import { By } from '@angular/platform-browser';
-
-
-class OwnserServiceStub {
-  getOwnerById(): Observable<Owner> {
-    return of({ id: 1, firstName: 'James' } as Owner);
-  }
-}
+const MOCK: Owner = {
+  id: 1,
+  firstName: 'John',
+  lastName: 'Doe',
+  address: '123 Main',
+  city: 'Springfield',
+  telephone: '1234567890',
+  pets: []
+};
 
 describe('OwnerEditComponent', () => {
-  let component: OwnerEditComponent;
   let fixture: ComponentFixture<OwnerEditComponent>;
+  let component: OwnerEditComponent;
+  let ownerService: { getOwnerById: ReturnType<typeof vi.fn>; updateOwner: ReturnType<typeof vi.fn> };
   let router: Router;
-  beforeEach(
-    waitForAsync(() => {
-      TestBed.configureTestingModule({
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
-    // schemas: [ NO_ERRORS_SCHEMA ],
-    imports: [FormsModule, OwnerEditComponent],
-    providers: [
-        provideRouter([]),
-        { provide: OwnerService, useClass: OwnserServiceStub },
-        { provide: Router, useClass: RouterStub },
-        { provide: ActivatedRoute, useClass: ActivatedRouteStub },
-    ],
-}).compileComponents();
-    })
-  );
 
-  beforeEach(() => {
+  beforeEach(async () => {
+    ownerService = {
+      getOwnerById: vi.fn().mockReturnValue(of(MOCK)),
+      updateOwner: vi.fn(),
+    };
+
+    await TestBed.configureTestingModule({
+      imports: [OwnerEditComponent],
+      providers: [
+        {provide: OwnerService, useValue: ownerService},
+        provideRouter([]),
+        {provide: ActivatedRoute, useValue: {snapshot: {params: {id: '1'}}}},
+      ],
+    }).compileComponents();
+
     fixture = TestBed.createComponent(OwnerEditComponent);
     component = fixture.componentInstance;
+    router = TestBed.inject(Router);
     fixture.detectChanges();
-    router=TestBed.inject(Router);
-    spyOn(router,'navigate');
   });
 
-  it('should create OwnerEditComponent', () => {
-    expect(component).toBeTruthy();
+  it('should create', () => expect(component).toBeTruthy());
+
+  it('loads owner and patches form on init', () => {
+    expect(component.owner()).toEqual(MOCK);
+    expect(component.form.value.firstName).toBe('John');
+    expect(component.form.value.lastName).toBe('Doe');
   });
 
-  it('back button routing', () => {
-    component.gotoOwnerDetail({ id: 1 } as Owner);
-    expect(router.navigate).toHaveBeenCalledWith(['/owners', 1]);
+  it('form is valid when loaded with correct data', () => {
+    expect(component.form.valid).toBe(true);
   });
 
- 
-  it('update owner', () => {
-    let buttons = fixture.debugElement.queryAll(By.css('button'));
-    let updateOwnerButton = buttons[1].nativeElement;
-    spyOn(component, 'onSubmit');
-    updateOwnerButton.click();
-    expect(component.onSubmit).toHaveBeenCalled();
+  describe('onSubmit', () => {
+    it('calls updateOwner with correct data', () => {
+      ownerService.updateOwner.mockReturnValue(of(MOCK));
+      component.onSubmit();
+      expect(ownerService.updateOwner).toHaveBeenCalledWith('1', expect.objectContaining({id: 1}));
+    });
+
+    it('navigates to owner detail on success', () => {
+      ownerService.updateOwner.mockReturnValue(of(MOCK));
+      const spy = vi.spyOn(router, 'navigate');
+      component.onSubmit();
+      expect(spy).toHaveBeenCalledWith(['/owners', 1]);
+    });
+
+    it('sets errorMessage on error', () => {
+      ownerService.updateOwner.mockReturnValue(throwError(() => 'Error'));
+      component.onSubmit();
+      expect(component.errorMessage()).toBe('Error');
+    });
   });
 
+  it('gotoOwnerDetail() clears errorMessage and navigates', () => {
+    const spy = vi.spyOn(router, 'navigate');
+    component.gotoOwnerDetail(MOCK);
+    expect(component.errorMessage()).toBe('');
+    expect(spy).toHaveBeenCalledWith(['/owners', 1]);
+  });
 });

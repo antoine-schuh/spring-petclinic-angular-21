@@ -1,42 +1,75 @@
-/*
- *
- *  * Copyright 2016-2017 the original author or authors.
- *  *
- *  * Licensed under the Apache License, Version 2.0 (the "License");
- *  * you may not use this file except in compliance with the License.
- *  * You may obtain a copy of the License at
- *  *
- *  *      http://www.apache.org/licenses/LICENSE-2.0
- *  *
- *  * Unless required by applicable law or agreed to in writing, software
- *  * distributed under the License is distributed on an "AS IS" BASIS,
- *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  * See the License for the specific language governing permissions and
- *  * limitations under the License.
- *
- */
-
-/* tslint:disable:no-unused-variable */
-
-
-/**
- * @author Vitaliy Fedoriv
- */
-
-import { inject, TestBed, waitForAsync } from '@angular/core/testing';
+import {provideHttpClient} from '@angular/common/http';
+import {HttpTestingController, provideHttpClientTesting} from '@angular/common/http/testing';
+import {TestBed} from '@angular/core/testing';
+import {HttpErrorHandler} from '../error.service';
+import {Owner} from '../owners/owner';
+import {Pet} from './pet';
 import {PetService} from './pet.service';
-import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { HttpClient, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+
+const BASE = 'http://localhost:9966/petclinic/api/';
+const OWNER: Owner = {
+  id: 2,
+  firstName: 'Jane',
+  lastName: 'Doe',
+  address: '1 St',
+  city: 'City',
+  telephone: '0000',
+  pets: []
+};
+const MOCK: Pet = {
+  id: 1,
+  name: 'Buddy',
+  birthDate: '2020-01-01',
+  type: {id: 1, name: 'dog'},
+  ownerId: 2,
+  owner: OWNER,
+  visits: []
+};
 
 describe('PetService', () => {
+  let service: PetService;
+  let http: HttpTestingController;
+
   beforeEach(() => {
     TestBed.configureTestingModule({
-    imports: [],
-    providers: [PetService, provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting()]
-});
+      providers: [provideHttpClient(), provideHttpClientTesting(), HttpErrorHandler],
+    });
+    service = TestBed.inject(PetService);
+    http = TestBed.inject(HttpTestingController);
   });
 
-  it('should ...', waitForAsync(inject([HttpTestingController], (petService: PetService, http: HttpClient) => {
-    expect(petService).toBeTruthy();
-  })));
+  afterEach(() => http.verify());
+
+  it('should be created', () => expect(service).toBeTruthy());
+
+  it('getPets() GETs base pets URL', () => {
+    service.getPets().subscribe(r => expect(r).toEqual([MOCK]));
+    http.expectOne(`${BASE}pets`).flush([MOCK]);
+  });
+
+  it('getPetById() GETs correct URL', () => {
+    service.getPetById(1).subscribe(r => expect(r).toEqual(MOCK));
+    http.expectOne(`${BASE}pets/1`).flush(MOCK);
+  });
+
+  it('addPet() POSTs to owners/:id/pets URL', () => {
+    service.addPet(MOCK).subscribe();
+    const req = http.expectOne(`${BASE}owners/2/pets`);
+    expect(req.request.method).toBe('POST');
+    req.flush(MOCK);
+  });
+
+  it('updatePet() PUTs to correct URL', () => {
+    service.updatePet('1', MOCK).subscribe();
+    const req = http.expectOne(`${BASE}pets/1`);
+    expect(req.request.method).toBe('PUT');
+    req.flush(MOCK);
+  });
+
+  it('deletePet() DELETEs correct URL', () => {
+    service.deletePet('1').subscribe();
+    const req = http.expectOne(`${BASE}pets/1`);
+    expect(req.request.method).toBe('DELETE');
+    req.flush(1);
+  });
 });

@@ -1,117 +1,123 @@
-/*
- *
- *  * Copyright 2016-2017 the original author or authors.
- *  *
- *  * Licensed under the Apache License, Version 2.0 (the "License");
- *  * you may not use this file except in compliance with the License.
- *  * You may obtain a copy of the License at
- *  *
- *  *      http://www.apache.org/licenses/LICENSE-2.0
- *  *
- *  * Unless required by applicable law or agreed to in writing, software
- *  * distributed under the License is distributed on an "AS IS" BASIS,
- *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  * See the License for the specific language governing permissions and
- *  * limitations under the License.
- *
- */
-
-/* tslint:disable:no-unused-variable */
-
-/**
- * @author Vitaliy Fedoriv
- */
-
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
-import {CUSTOM_ELEMENTS_SCHEMA} from '@angular/core';
-
-import {VisitAddComponent} from './visit-add.component';
-import {FormsModule} from '@angular/forms';
-import {VisitService} from '../visit.service';
-import {PetService} from '../../pets/pet.service';
-import {ActivatedRoute, Router} from '@angular/router';
-import {ActivatedRouteStub, RouterStub} from '../../testing/router-stubs';
-import {Pet} from '../../pets/pet';
-import {Observable, of} from 'rxjs';
-import {MatDateFnsModule} from '@angular/material-date-fns-adapter';
-import { MatDatepickerModule } from '@angular/material/datepicker';
-import Spy = jasmine.Spy;
+import {ComponentFixture, TestBed} from '@angular/core/testing';
+import {ActivatedRoute, provideRouter, Router} from '@angular/router';
+import {of, throwError} from 'rxjs';
+import {Owner} from '../../owners/owner';
 import {OwnerService} from '../../owners/owner.service';
+import {Pet} from '../../pets/pet';
+import {PetService} from '../../pets/pet.service';
+import {PetType} from '../../pettypes/pettype';
+import {VisitService} from '../visit.service';
+import {VisitAddComponent} from './visit-add.component';
 
-class PetServiceStub {
-  addPet(pet: Pet): Observable<Pet> {
-    return of(pet);
-  }
-  getPetById(petId: string): Observable<Pet> {
-    return of({
-      id: 1, name: 'Leo', birthDate: '2010-09-07',
-      type: { id: 1, name: 'cat' }, ownerId: 1, owner: null, visits: null
-    } as any as Pet);
-  }
-}
-
-class OwnerServiceStub {
-  getOwnerById(ownerId: number): Observable<any> {
-    return of({ id: 1, firstName: 'George', lastName: 'Franklin',
-      address: '110 W. Liberty St.', city: 'Madison', telephone: '6085551023', pets: null });
-  }
-}
-
-class VisitServiceStub {
-}
+const MOCK_PET_TYPE: PetType = {id: 1, name: 'Dog'};
+const MOCK_OWNER: Owner = {
+  id: 10,
+  firstName: 'Alice',
+  lastName: 'Smith',
+  address: '1 Main',
+  city: 'Springfield',
+  telephone: '555-1234',
+  pets: []
+};
+const MOCK_PET: Pet = {
+  id: 5,
+  ownerId: 10,
+  name: 'Rex',
+  birthDate: '2020-01-01',
+  type: MOCK_PET_TYPE,
+  owner: MOCK_OWNER,
+  visits: []
+};
 
 describe('VisitAddComponent', () => {
-  let component: VisitAddComponent;
   let fixture: ComponentFixture<VisitAddComponent>;
-  let petService: PetService;
-  let visitService: VisitService;
-  let testPet: Pet;
-  let spy: Spy;
+  let component: VisitAddComponent;
+  let visitService: { addVisit: ReturnType<typeof vi.fn> };
+  let petService: { getPetById: ReturnType<typeof vi.fn> };
+  let ownerService: { getOwnerById: ReturnType<typeof vi.fn> };
+  let router: Router;
 
-  beforeEach(waitForAsync(() => {
-    TestBed.configureTestingModule({
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
-    imports: [FormsModule, MatDatepickerModule, MatDateFnsModule, VisitAddComponent],
-    providers: [
-        { provide: PetService, useClass: PetServiceStub },
-        { provide: VisitService, useClass: VisitServiceStub },
-        { provide: OwnerService, useClass: OwnerServiceStub },
-        { provide: Router, useClass: RouterStub },
-        { provide: ActivatedRoute, useClass: ActivatedRouteStub }
-    ]
-})
-      .compileComponents();
-  }));
+  beforeEach(async () => {
+    visitService = {addVisit: vi.fn()};
+    petService = {getPetById: vi.fn().mockReturnValue(of(MOCK_PET))};
+    ownerService = {getOwnerById: vi.fn().mockReturnValue(of(MOCK_OWNER))};
 
-  beforeEach(() => {
+    await TestBed.configureTestingModule({
+      imports: [VisitAddComponent],
+      providers: [
+        {provide: VisitService, useValue: visitService},
+        {provide: PetService, useValue: petService},
+        {provide: OwnerService, useValue: ownerService},
+        {provide: ActivatedRoute, useValue: {snapshot: {params: {id: '5'}}}},
+        provideRouter([]),
+      ],
+    }).compileComponents();
+
     fixture = TestBed.createComponent(VisitAddComponent);
     component = fixture.componentInstance;
-    testPet = {
-      id: 1,
-      name: 'Leo',
-      birthDate: '2010-09-07',
-      type: {id: 1, name: 'cat'},
-      ownerId: 1,
-      owner: {
-        id: 1,
-        firstName: 'George',
-        lastName: 'Franklin',
-        address: '110 W. Liberty St.',
-        city: 'Madison',
-        telephone: '6085551023',
-        pets: null
-      },
-      visits: null
-    };
-    petService = fixture.debugElement.injector.get(PetService);
-    visitService = fixture.debugElement.injector.get(VisitService);
-    spy = spyOn(petService, 'addPet')
-      .and.returnValue(of(testPet));
-
+    router = TestBed.inject(Router);
     fixture.detectChanges();
   });
 
-  it('should create VisitAddComponent', () => {
-    expect(component).toBeTruthy();
+  it('should create', () => expect(component).toBeTruthy());
+
+  it('loads pet and owner on init', () => {
+    expect(component.currentPet()).toEqual(MOCK_PET);
+    expect(component.currentOwner()).toEqual(MOCK_OWNER);
+    expect(component.currentPetType()).toEqual(MOCK_PET_TYPE);
+  });
+
+  it('sets errorMessage when pet load fails', async () => {
+    petService.getPetById.mockReturnValue(throwError(() => 'Load error'));
+
+    await TestBed.resetTestingModule();
+    await TestBed.configureTestingModule({
+      imports: [VisitAddComponent],
+      providers: [
+        {provide: VisitService, useValue: visitService},
+        {provide: PetService, useValue: petService},
+        {provide: OwnerService, useValue: ownerService},
+        {provide: ActivatedRoute, useValue: {snapshot: {params: {id: '5'}}}},
+        provideRouter([]),
+      ],
+    }).compileComponents();
+
+    const f = TestBed.createComponent(VisitAddComponent);
+    f.detectChanges();
+    expect(f.componentInstance.errorMessage()).toBe('Load error');
+  });
+
+  it('form is invalid when empty', () => expect(component.form.invalid).toBe(true));
+
+  describe('onSubmit', () => {
+    beforeEach(() => {
+      component.dateCtrl.setValue(new Date('2024-05-01'));
+      component.descriptionCtrl.setValue('Annual checkup');
+    });
+
+    it('calls addVisit on submit', () => {
+      visitService.addVisit.mockReturnValue(of({}));
+      component.onSubmit();
+      expect(visitService.addVisit).toHaveBeenCalled();
+    });
+
+    it('navigates to owner detail on success', () => {
+      visitService.addVisit.mockReturnValue(of({}));
+      const spy = vi.spyOn(router, 'navigate');
+      component.onSubmit();
+      expect(spy).toHaveBeenCalledWith(['/owners', MOCK_OWNER.id]);
+    });
+
+    it('sets errorMessage on submit error', () => {
+      visitService.addVisit.mockReturnValue(throwError(() => 'Submit error'));
+      component.onSubmit();
+      expect(component.errorMessage()).toBe('Submit error');
+    });
+  });
+
+  it('gotoOwnerDetail() navigates to owner page', () => {
+    const spy = vi.spyOn(router, 'navigate');
+    component.gotoOwnerDetail();
+    expect(spy).toHaveBeenCalledWith(['/owners', MOCK_OWNER.id]);
   });
 });

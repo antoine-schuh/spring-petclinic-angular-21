@@ -1,27 +1,9 @@
-/*
- *
- *  * Copyright 2017-2018 the original author or authors.
- *  *
- *  * Licensed under the Apache License, Version 2.0 (the "License");
- *  * you may not use this file except in compliance with the License.
- *  * You may obtain a copy of the License at
- *  *
- *  *      http://www.apache.org/licenses/LICENSE-2.0
- *  *
- *  * Unless required by applicable law or agreed to in writing, software
- *  * distributed under the License is distributed on an "AS IS" BASIS,
- *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  * See the License for the specific language governing permissions and
- *  * limitations under the License.
- *
- */
-
-import { Component, effect, inject, linkedSignal, signal } from '@angular/core';
-import { rxResource } from '@angular/core/rxjs-interop';
-import { PetType } from '../pettype';
-import { PetTypeService } from '../pettype.service';
-import { ActivatedRoute, Router } from '@angular/router';
-import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
+import {Component, inject, signal} from '@angular/core';
+import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
+import {FormBuilder, FormControl, ReactiveFormsModule, Validators} from '@angular/forms';
+import {ActivatedRoute, Router} from '@angular/router';
+import {PetType} from '../pettype';
+import {PetTypeService} from '../pettype.service';
 
 @Component({
   selector: 'app-pettype-edit',
@@ -37,11 +19,7 @@ export class PettypeEditComponent {
 
   private pettypeId = this.route.snapshot.params.id;
 
-  private pettypeResource = rxResource<PetType, void>({
-    stream: () => this.pettypeService.getPetTypeById(this.pettypeId),
-  });
-
-  pettype = linkedSignal<PetType>(() => this.pettypeResource.value() ?? ({} as PetType));
+  pettype = signal<PetType>({} as PetType);
   errorMessage = signal('');
 
   nameCtrl = new FormControl<string>('', [
@@ -56,10 +34,12 @@ export class PettypeEditComponent {
   });
 
   constructor() {
-    effect(() => {
-      const p = this.pettype();
-      if (p.id) this.form.patchValue({ name: p.name });
-    });
+    this.pettypeService.getPetTypeById(this.pettypeId)
+      .pipe(takeUntilDestroyed())
+      .subscribe(p => {
+        this.pettype.set(p);
+        this.form.patchValue({name: p.name});
+      });
   }
 
   onSubmit() {

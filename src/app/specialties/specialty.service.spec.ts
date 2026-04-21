@@ -1,41 +1,58 @@
-/*
- *
- *  * Copyright 2016-2017 the original author or authors.
- *  *
- *  * Licensed under the Apache License, Version 2.0 (the "License");
- *  * you may not use this file except in compliance with the License.
- *  * You may obtain a copy of the License at
- *  *
- *  *      http://www.apache.org/licenses/LICENSE-2.0
- *  *
- *  * Unless required by applicable law or agreed to in writing, software
- *  * distributed under the License is distributed on an "AS IS" BASIS,
- *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  * See the License for the specific language governing permissions and
- *  * limitations under the License.
- *
- */
-
-/* tslint:disable:no-unused-variable */
-
-/**
- * @author Vitaliy Fedoriv
- */
-
-import { inject, TestBed, waitForAsync } from '@angular/core/testing';
+import {provideHttpClient} from '@angular/common/http';
+import {HttpTestingController, provideHttpClientTesting} from '@angular/common/http/testing';
+import {TestBed} from '@angular/core/testing';
+import {HttpErrorHandler} from '../error.service';
+import {Specialty} from './specialty';
 import {SpecialtyService} from './specialty.service';
-import { HttpClient, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
-import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+
+const BASE = 'http://localhost:9966/petclinic/api/specialties';
+const MOCK: Specialty = {id: 1, name: 'Radiology'};
 
 describe('SpecialtyService', () => {
+  let service: SpecialtyService;
+  let http: HttpTestingController;
+
   beforeEach(() => {
     TestBed.configureTestingModule({
-    imports: [],
-    providers: [SpecialtyService, provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting()]
-});
+      providers: [provideHttpClient(), provideHttpClientTesting(), HttpErrorHandler],
+    });
+    service = TestBed.inject(SpecialtyService);
+    http = TestBed.inject(HttpTestingController);
   });
 
-  it('should ...', waitForAsync(inject([HttpTestingController], (specialtyService: SpecialtyService, http: HttpClient) => {
-    expect(specialtyService).toBeTruthy();
-  })));
+  afterEach(() => http.verify());
+
+  it('should be created', () => expect(service).toBeTruthy());
+
+  it('getSpecialties() GETs base URL', () => {
+    service.getSpecialties().subscribe(r => expect(r).toEqual([MOCK]));
+    http.expectOne(BASE).flush([MOCK]);
+  });
+
+  it('getSpecialtyById() GETs correct URL', () => {
+    service.getSpecialtyById('1').subscribe(r => expect(r).toEqual(MOCK));
+    http.expectOne(`${BASE}/1`).flush(MOCK);
+  });
+
+  it('addSpecialty() POSTs to base URL', () => {
+    service.addSpecialty(MOCK).subscribe();
+    const req = http.expectOne(BASE);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual(MOCK);
+    req.flush(MOCK);
+  });
+
+  it('updateSpecialty() PUTs to correct URL', () => {
+    service.updateSpecialty('1', MOCK).subscribe();
+    const req = http.expectOne(`${BASE}/1`);
+    expect(req.request.method).toBe('PUT');
+    req.flush(MOCK);
+  });
+
+  it('deleteSpecialty() DELETEs correct URL', () => {
+    service.deleteSpecialty('1').subscribe();
+    const req = http.expectOne(`${BASE}/1`);
+    expect(req.request.method).toBe('DELETE');
+    req.flush(1);
+  });
 });

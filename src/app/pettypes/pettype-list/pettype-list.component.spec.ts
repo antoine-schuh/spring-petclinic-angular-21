@@ -1,72 +1,77 @@
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
-
-import {PettypeListComponent} from './pettype-list.component';
-import {PetTypeService} from '../pettype.service';
+import {ComponentFixture, TestBed} from '@angular/core/testing';
+import {provideRouter, Router} from '@angular/router';
+import {of, throwError} from 'rxjs';
 import {PetType} from '../pettype';
-import {CUSTOM_ELEMENTS_SCHEMA} from '@angular/core';
-import {ActivatedRoute, Router} from '@angular/router';
-import {ActivatedRouteStub, RouterStub} from '../../testing/router-stubs';
-import {FormsModule} from '@angular/forms';
-import {Observable, of} from 'rxjs';
-import Spy = jasmine.Spy;
+import {PetTypeService} from '../pettype.service';
+import {PettypeListComponent} from './pettype-list.component';
 
-class PetTypeServiceStub {
-  deletePetType(typeId: string): Observable<number> {
-    return of();
-  }
-  getPetTypes(): Observable<PetType[]> {
-    return of();
-  }
-}
-
+const MOCK: PetType[] = [{id: 1, name: 'Dog'}, {id: 2, name: 'Cat'}];
 
 describe('PettypeListComponent', () => {
-  let component: PettypeListComponent;
   let fixture: ComponentFixture<PettypeListComponent>;
-  let pettypeService: PetTypeService;
-  let spy: Spy;
-  let testPettypes: PetType[];
-  let responseStatus: number;
+  let component: PettypeListComponent;
+  let petTypeService: { getPetTypes: ReturnType<typeof vi.fn>; deletePetType: ReturnType<typeof vi.fn> };
+  let router: Router;
 
-  beforeEach(waitForAsync(() => {
-    TestBed.configureTestingModule({
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
-    imports: [FormsModule, PettypeListComponent],
-    providers: [
-        { provide: PetTypeService, useClass: PetTypeServiceStub },
-        { provide: Router, useClass: RouterStub },
-        { provide: ActivatedRoute, useClass: ActivatedRouteStub }
-    ]
-})
-      .compileComponents();
-  }));
+  beforeEach(async () => {
+    petTypeService = {
+      getPetTypes: vi.fn().mockReturnValue(of(MOCK)),
+      deletePetType: vi.fn(),
+    };
 
-  beforeEach(() => {
+    await TestBed.configureTestingModule({
+      imports: [PettypeListComponent],
+      providers: [
+        {provide: PetTypeService, useValue: petTypeService},
+        provideRouter([]),
+      ],
+    }).compileComponents();
+
     fixture = TestBed.createComponent(PettypeListComponent);
     component = fixture.componentInstance;
-
-    testPettypes = [{
-      id: 1,
-      name: 'test'
-    }];
-
-    pettypeService = fixture.debugElement.injector.get(PetTypeService);
-    responseStatus = 204; // success delete return NO_CONTENT
-    component.pettypes.set(testPettypes);
-
-    spy = spyOn(pettypeService, 'deletePetType')
-      .and.returnValue(of(responseStatus));
-
+    router = TestBed.inject(Router);
     fixture.detectChanges();
   });
 
-  it('should create PettypeListComponent', () => {
-    expect(component).toBeTruthy();
+  it('should create', () => expect(component).toBeTruthy());
+
+  it('loads pet types on init', () => {
+    expect(component.pettypes()).toEqual(MOCK);
+    expect(component.isPetTypesDataReceived()).toBe(true);
   });
 
-  it('should call deletePetType() method', () => {
-    fixture.detectChanges();
-    component.deletePettype(component.pettypes()[0]);
-    expect(spy.calls.any()).toBe(true, 'deletePetType called');
+  it('deletePettype() removes pet type from list', () => {
+    petTypeService.deletePetType.mockReturnValue(of(200));
+    component.deletePettype(MOCK[0]);
+    expect(component.pettypes()).toEqual([MOCK[1]]);
+  });
+
+  it('deletePettype() sets errorMessage on error', () => {
+    petTypeService.deletePetType.mockReturnValue(throwError(() => 'Error'));
+    component.deletePettype(MOCK[0]);
+    expect(component.errorMessage).toBe('Error');
+  });
+
+  it('onNewPettype() appends pet type', () => {
+    const newType: PetType = {id: 3, name: 'Bird'};
+    component.onNewPettype(newType);
+    expect(component.pettypes()).toContain(newType);
+  });
+
+  it('showAddPettypeComponent() toggles isInsert', () => {
+    component.showAddPettypeComponent();
+    expect(component.isInsert()).toBe(true);
+  });
+
+  it('showEditPettypeComponent() navigates to edit', () => {
+    const spy = vi.spyOn(router, 'navigate');
+    component.showEditPettypeComponent(MOCK[0]);
+    expect(spy).toHaveBeenCalledWith(['/pettypes', '1', 'edit']);
+  });
+
+  it('gotoHome() navigates to /welcome', () => {
+    const spy = vi.spyOn(router, 'navigate');
+    component.gotoHome();
+    expect(spy).toHaveBeenCalledWith(['/welcome']);
   });
 });

@@ -1,45 +1,20 @@
-/*
- *
- *  * Copyright 2016-2017 the original author or authors.
- *  *
- *  * Licensed under the Apache License, Version 2.0 (the "License");
- *  * you may not use this file except in compliance with the License.
- *  * You may obtain a copy of the License at
- *  *
- *  *      http://www.apache.org/licenses/LICENSE-2.0
- *  *
- *  * Unless required by applicable law or agreed to in writing, software
- *  * distributed under the License is distributed on an "AS IS" BASIS,
- *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  * See the License for the specific language governing permissions and
- *  * limitations under the License.
- *
- */
+import {Component, inject, signal} from '@angular/core';
+import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
+import {FormBuilder, FormControl, ReactiveFormsModule, Validators} from '@angular/forms';
+import {provideNativeDateAdapter} from '@angular/material/core';
+import {MatDatepicker, MatDatepickerInput, MatDatepickerToggle,} from '@angular/material/datepicker';
+import {ActivatedRoute, Router} from '@angular/router';
 
-/**
- * @author Vitaliy Fedoriv
- */
-
-import { Component, computed, effect, inject, signal } from '@angular/core';
-import { provideNativeDateAdapter } from '@angular/material/core';
-import { rxResource } from '@angular/core/rxjs-interop';
-import { Visit } from '../visit';
-import { VisitService } from '../visit.service';
-import { ActivatedRoute, Router } from '@angular/router';
-import { PetService } from '../../pets/pet.service';
-import { Pet } from '../../pets/pet';
-import { PetType } from '../../pettypes/pettype';
-import { Owner } from '../../owners/owner';
-
-import { format } from 'date-fns';
-import { OwnerService } from '../../owners/owner.service';
-import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
-import {
-  MatDatepickerInput,
-  MatDatepickerToggle,
-  MatDatepicker,
-} from '@angular/material/datepicker';
-import { VisitListComponent } from '../visit-list/visit-list.component';
+import {format} from 'date-fns';
+import {switchMap, tap} from 'rxjs';
+import {Owner} from '../../owners/owner';
+import {OwnerService} from '../../owners/owner.service';
+import {Pet} from '../../pets/pet';
+import {PetService} from '../../pets/pet.service';
+import {PetType} from '../../pettypes/pettype';
+import {Visit} from '../visit';
+import {VisitListComponent} from '../visit-list/visit-list.component';
+import {VisitService} from '../visit.service';
 
 @Component({
   selector: 'app-visit-add',
@@ -64,18 +39,9 @@ export class VisitAddComponent {
 
   private petId = +this.route.snapshot.params.id;
 
-  private petResource = rxResource<Pet, void>({
-    stream: () => this.petService.getPetById(this.petId),
-  });
-
-  private ownerResource = rxResource<Owner, number>({
-    params: () => this.petResource.value()?.ownerId,
-    stream: ({ params: ownerId }) => this.ownerService.getOwnerById(ownerId),
-  });
-
-  currentPet = computed(() => this.petResource.value() ?? ({} as Pet));
-  currentOwner = computed(() => this.ownerResource.value() ?? ({} as Owner));
-  currentPetType = computed(() => this.petResource.value()?.type ?? ({} as PetType));
+  currentPet = signal<Pet>({} as Pet);
+  currentOwner = signal<Owner>({} as Owner);
+  currentPetType = signal<PetType>({} as PetType);
   errorMessage = signal('');
 
   dateCtrl        = new FormControl<Date | null>(null, [Validators.required]);
@@ -87,9 +53,16 @@ export class VisitAddComponent {
   });
 
   constructor() {
-    effect(() => {
-      const err = this.petResource.error() ?? this.ownerResource.error();
-      if (err) this.errorMessage.set(String(err));
+    this.petService.getPetById(this.petId).pipe(
+      tap(pet => {
+        this.currentPet.set(pet);
+        this.currentPetType.set(pet.type ?? ({} as PetType));
+      }),
+      switchMap(pet => this.ownerService.getOwnerById(pet.ownerId)),
+      takeUntilDestroyed()
+    ).subscribe({
+      next: owner => this.currentOwner.set(owner),
+      error: err => this.errorMessage.set(String(err))
     });
   }
 

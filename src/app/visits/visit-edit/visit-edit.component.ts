@@ -1,44 +1,19 @@
-/*
- *
- *  * Copyright 2016-2017 the original author or authors.
- *  *
- *  * Licensed under the Apache License, Version 2.0 (the "License");
- *  * you may not use this file except in compliance with the License.
- *  * You may obtain a copy of the License at
- *  *
- *  *      http://www.apache.org/licenses/LICENSE-2.0
- *  *
- *  * Unless required by applicable law or agreed to in writing, software
- *  * distributed under the License is distributed on an "AS IS" BASIS,
- *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  * See the License for the specific language governing permissions and
- *  * limitations under the License.
- *
- */
+import {Component, inject, signal} from '@angular/core';
+import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
+import {FormBuilder, FormControl, ReactiveFormsModule, Validators} from '@angular/forms';
+import {provideNativeDateAdapter} from '@angular/material/core';
+import {MatDatepicker, MatDatepickerInput, MatDatepickerToggle,} from '@angular/material/datepicker';
+import {ActivatedRoute, Router} from '@angular/router';
 
-/**
- * @author Vitaliy Fedoriv
- */
-
-import { Component, computed, effect, inject, linkedSignal, signal } from '@angular/core';
-import { provideNativeDateAdapter } from '@angular/material/core';
-import { rxResource } from '@angular/core/rxjs-interop';
-import { Visit } from '../visit';
-import { Pet } from '../../pets/pet';
-import { Owner } from '../../owners/owner';
-import { PetType } from '../../pettypes/pettype';
-import { VisitService } from '../visit.service';
-import { ActivatedRoute, Router } from '@angular/router';
-
-import { format } from 'date-fns';
-import { OwnerService } from '../../owners/owner.service';
-import { PetService } from '../../pets/pet.service';
-import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
-import {
-  MatDatepickerInput,
-  MatDatepickerToggle,
-  MatDatepicker,
-} from '@angular/material/datepicker';
+import {format} from 'date-fns';
+import {switchMap, tap} from 'rxjs';
+import {Owner} from '../../owners/owner';
+import {OwnerService} from '../../owners/owner.service';
+import {Pet} from '../../pets/pet';
+import {PetService} from '../../pets/pet.service';
+import {PetType} from '../../pettypes/pettype';
+import {Visit} from '../visit';
+import {VisitService} from '../visit.service';
 
 @Component({
   selector: 'app-visit-edit',
@@ -62,24 +37,10 @@ export class VisitEditComponent {
 
   private visitId = this.route.snapshot.params.id as string;
 
-  private visitResource = rxResource<Visit, void>({
-    stream: () => this.visitService.getVisitById(this.visitId),
-  });
-
-  private petResource = rxResource<Pet, number>({
-    params: () => this.visitResource.value()?.petId,
-    stream: ({ params: petId }) => this.petService.getPetById(petId),
-  });
-
-  private ownerResource = rxResource<Owner, number>({
-    params: () => this.petResource.value()?.ownerId,
-    stream: ({ params: ownerId }) => this.ownerService.getOwnerById(ownerId),
-  });
-
-  visit = linkedSignal<Visit>(() => this.visitResource.value() ?? ({} as Visit));
-  currentPet = computed(() => this.petResource.value() ?? ({} as Pet));
-  currentOwner = computed(() => this.ownerResource.value() ?? ({} as Owner));
-  currentPetType = computed(() => this.petResource.value()?.type ?? ({} as PetType));
+  visit = signal<Visit>({} as Visit);
+  currentPet = signal<Pet>({} as Pet);
+  currentOwner = signal<Owner>({} as Owner);
+  currentPetType = signal<PetType>({} as PetType);
   errorMessage = signal('');
 
   dateCtrl        = new FormControl<Date | null>(null, [Validators.required]);
@@ -91,18 +52,26 @@ export class VisitEditComponent {
   });
 
   constructor() {
-    effect(() => {
-      const err = this.visitResource.error() ?? this.petResource.error() ?? this.ownerResource.error();
-      if (err) this.errorMessage.set(String(err));
-    });
-    effect(() => {
-      const v = this.visit();
-      if (v.id) {
-        this.form.patchValue({
-          date:        v.date ? new Date(v.date) : null,
-          description: v.description,
-        });
-      }
+    this.visitService.getVisitById(this.visitId).pipe(
+      tap(v => {
+        this.visit.set(v);
+        if (v.id) {
+          this.form.patchValue({
+            date: v.date ? new Date(v.date) : null,
+            description: v.description,
+          });
+        }
+      }),
+      switchMap(v => this.petService.getPetById(v.petId)),
+      tap(pet => {
+        this.currentPet.set(pet);
+        this.currentPetType.set(pet.type ?? ({} as PetType));
+      }),
+      switchMap(pet => this.ownerService.getOwnerById(pet.ownerId)),
+      takeUntilDestroyed()
+    ).subscribe({
+      next: owner => this.currentOwner.set(owner),
+      error: err => this.errorMessage.set(String(err))
     });
   }
 

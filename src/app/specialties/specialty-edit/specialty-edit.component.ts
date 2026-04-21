@@ -1,27 +1,9 @@
-/*
- *
- *  * Copyright 2017-2018 the original author or authors.
- *  *
- *  * Licensed under the Apache License, Version 2.0 (the "License");
- *  * you may not use this file except in compliance with the License.
- *  * You may obtain a copy of the License at
- *  *
- *  *      http://www.apache.org/licenses/LICENSE-2.0
- *  *
- *  * Unless required by applicable law or agreed to in writing, software
- *  * distributed under the License is distributed on an "AS IS" BASIS,
- *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  * See the License for the specific language governing permissions and
- *  * limitations under the License.
- *
- */
-
-import { Component, effect, inject, linkedSignal, signal } from '@angular/core';
-import { rxResource } from '@angular/core/rxjs-interop';
-import { Specialty } from '../specialty';
-import { SpecialtyService } from '../specialty.service';
-import { ActivatedRoute, Router } from '@angular/router';
-import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
+import {Component, inject, signal} from '@angular/core';
+import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
+import {FormBuilder, FormControl, ReactiveFormsModule, Validators} from '@angular/forms';
+import {ActivatedRoute, Router} from '@angular/router';
+import {Specialty} from '../specialty';
+import {SpecialtyService} from '../specialty.service';
 
 @Component({
   selector: 'app-specialty-edit',
@@ -37,11 +19,7 @@ export class SpecialtyEditComponent {
 
   private specId = this.route.snapshot.params.id;
 
-  private specialtyResource = rxResource<Specialty, void>({
-    stream: () => this.specialtyService.getSpecialtyById(this.specId),
-  });
-
-  specialty = linkedSignal<Specialty>(() => this.specialtyResource.value() ?? ({} as Specialty));
+  specialty = signal<Specialty>({} as Specialty);
   errorMessage = signal('');
 
   nameCtrl = new FormControl<string>('', [
@@ -56,10 +34,12 @@ export class SpecialtyEditComponent {
   });
 
   constructor() {
-    effect(() => {
-      const s = this.specialty();
-      if (s.id) this.form.patchValue({ name: s.name });
-    });
+    this.specialtyService.getSpecialtyById(this.specId)
+      .pipe(takeUntilDestroyed())
+      .subscribe(s => {
+        this.specialty.set(s);
+        this.form.patchValue({name: s.name});
+      });
   }
 
   onSubmit() {

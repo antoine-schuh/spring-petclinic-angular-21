@@ -1,31 +1,9 @@
-/*
- *
- *  * Copyright 2016-2017 the original author or authors.
- *  *
- *  * Licensed under the Apache License, Version 2.0 (the "License");
- *  * you may not use this file except in compliance with the License.
- *  * You may obtain a copy of the License at
- *  *
- *  *      http://www.apache.org/licenses/LICENSE-2.0
- *  *
- *  * Unless required by applicable law or agreed to in writing, software
- *  * distributed under the License is distributed on an "AS IS" BASIS,
- *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  * See the License for the specific language governing permissions and
- *  * limitations under the License.
- *
- */
-
-/**
- * @author Vitaliy Fedoriv
- */
-
-import { Component, effect, inject, linkedSignal, signal } from '@angular/core';
-import { rxResource } from '@angular/core/rxjs-interop';
-import { OwnerService } from '../owner.service';
-import { Owner } from '../owner';
-import { ActivatedRoute, Router } from '@angular/router';
-import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
+import {Component, inject, signal} from '@angular/core';
+import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
+import {FormBuilder, FormControl, ReactiveFormsModule, Validators} from '@angular/forms';
+import {ActivatedRoute, Router} from '@angular/router';
+import {Owner} from '../owner';
+import {OwnerService} from '../owner.service';
 
 @Component({
   selector: 'app-owner-edit',
@@ -41,11 +19,7 @@ export class OwnerEditComponent {
 
   private ownerId = this.route.snapshot.params.id;
 
-  ownerResource = rxResource<Owner, void>({
-    stream: () => this.ownerService.getOwnerById(this.ownerId),
-  });
-
-  owner = linkedSignal<Owner>(() => this.ownerResource.value() ?? ({} as Owner));
+  owner = signal<Owner>({} as Owner);
   errorMessage = signal('');
 
   firstNameCtrl = new FormControl<string>('', [Validators.required, Validators.minLength(1), Validators.maxLength(30), Validators.pattern('^[a-zA-Z]*$')]);
@@ -63,9 +37,10 @@ export class OwnerEditComponent {
   });
 
   constructor() {
-    effect(() => {
-      const o = this.owner();
-      if (o.id) {
+    this.ownerService.getOwnerById(this.ownerId)
+      .pipe(takeUntilDestroyed())
+      .subscribe(o => {
+        this.owner.set(o);
         this.form.patchValue({
           firstName: o.firstName,
           lastName:  o.lastName,
@@ -73,8 +48,7 @@ export class OwnerEditComponent {
           city:      o.city,
           telephone: o.telephone,
         });
-      }
-    });
+      });
   }
 
   onSubmit() {

@@ -1,32 +1,10 @@
-/*
- *
- *  * Copyright 2016-2018 the original author or authors.
- *  *
- *  * Licensed under the Apache License, Version 2.0 (the "License");
- *  * you may not use this file except in compliance with the License.
- *  * You may obtain a copy of the License at
- *  *
- *  *      http://www.apache.org/licenses/LICENSE-2.0
- *  *
- *  * Unless required by applicable law or agreed to in writing, software
- *  * distributed under the License is distributed on an "AS IS" BASIS,
- *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  * See the License for the specific language governing permissions and
- *  * limitations under the License.
- *
- */
-
-/**
- * @author Vitaliy Fedoriv
- */
-
-import { Component, computed, inject, linkedSignal, signal } from '@angular/core';
-import { rxResource } from '@angular/core/rxjs-interop';
-import { Specialty } from '../specialty';
-import { SpecialtyService } from '../specialty.service';
-import { Router } from '@angular/router';
-import { FormsModule } from '@angular/forms';
-import { SpecialtyAddComponent } from '../specialty-add/specialty-add.component';
+import {Component, inject, signal} from '@angular/core';
+import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
+import {FormsModule} from '@angular/forms';
+import {Router} from '@angular/router';
+import {Specialty} from '../specialty';
+import {SpecialtyAddComponent} from '../specialty-add/specialty-add.component';
+import {SpecialtyService} from '../specialty.service';
 
 @Component({
   selector: 'app-specialty-list',
@@ -38,15 +16,20 @@ export class SpecialtyListComponent {
   private specService = inject(SpecialtyService);
   private router = inject(Router);
 
-  specResource = rxResource<Specialty[], void>({
-    stream: () => this.specService.getSpecialties(),
-  });
-
-  specialties = linkedSignal<Specialty[]>(() => this.specResource.value() ?? []);
-  isSpecialitiesDataReceived = computed(() => !this.specResource.isLoading());
+  specialties = signal<Specialty[]>([]);
+  isSpecialitiesDataReceived = signal(false);
   errorMessage = '';
   responseStatus: number;
   isInsert = signal(false);
+
+  constructor() {
+    this.specService.getSpecialties()
+      .pipe(takeUntilDestroyed())
+      .subscribe(s => {
+        this.specialties.set(s);
+        this.isSpecialitiesDataReceived.set(true);
+      });
+  }
 
   deleteSpecialty(specialty: Specialty) {
     this.specService.deleteSpecialty(specialty.id.toString()).subscribe({

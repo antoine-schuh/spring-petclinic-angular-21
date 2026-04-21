@@ -1,129 +1,79 @@
-/*
- *
- *  * Copyright 2016-2017 the original author or authors.
- *  *
- *  * Licensed under the Apache License, Version 2.0 (the "License");
- *  * you may not use this file except in compliance with the License.
- *  * You may obtain a copy of the License at
- *  *
- *  *      http://www.apache.org/licenses/LICENSE-2.0
- *  *
- *  * Unless required by applicable law or agreed to in writing, software
- *  * distributed under the License is distributed on an "AS IS" BASIS,
- *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  * See the License for the specific language governing permissions and
- *  * limitations under the License.
- *
- */
-
-/* tslint:disable:no-unused-variable */
-
-/**
- * @author Vitaliy Fedoriv
- */
-
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
-import {By} from '@angular/platform-browser';
-import {DebugElement, NO_ERRORS_SCHEMA} from '@angular/core';
-
-import {OwnerListComponent} from './owner-list.component';
-import {FormsModule} from '@angular/forms';
-import {ActivatedRoute} from '@angular/router';
-import {OwnerService} from '../owner.service';
+import {ComponentFixture, TestBed} from '@angular/core/testing';
+import {provideRouter, Router} from '@angular/router';
+import {of} from 'rxjs';
 import {Owner} from '../owner';
-import {Observable, of} from 'rxjs';
-import {provideRouter} from '@angular/router';
-import {CommonModule} from '@angular/common';
-import {ActivatedRouteStub} from '../../testing/router-stubs';
-import {OwnerDetailComponent} from '../owner-detail/owner-detail.component';
-import {OwnerAddComponent} from '../owner-add/owner-add.component';
-import {OwnerEditComponent} from '../owner-edit/owner-edit.component';
-import Spy = jasmine.Spy;
+import {OwnerService} from '../owner.service';
+import {OwnerListComponent} from './owner-list.component';
 
-
-class OwnerServiceStub {
-  getOwners(): Observable<Owner[]> {
-    return of();
-  }
-}
+const MOCK_OWNERS: Owner[] = [
+  {
+    id: 1,
+    firstName: 'John',
+    lastName: 'Doe',
+    address: '123 Main',
+    city: 'Springfield',
+    telephone: '1234567890',
+    pets: []
+  },
+];
 
 describe('OwnerListComponent', () => {
-
-  let component: OwnerListComponent;
   let fixture: ComponentFixture<OwnerListComponent>;
-  let ownerService = new OwnerServiceStub();
-  let spy: Spy;
-  let de: DebugElement;
-  let el: HTMLElement;
+  let component: OwnerListComponent;
+  let ownerService: { getOwners: ReturnType<typeof vi.fn>; searchOwners: ReturnType<typeof vi.fn> };
+  let router: Router;
 
+  beforeEach(async () => {
+    ownerService = {
+      getOwners: vi.fn().mockReturnValue(of(MOCK_OWNERS)),
+      searchOwners: vi.fn().mockReturnValue(of(MOCK_OWNERS)),
+    };
 
-  const testOwner: Owner = {
-    id: 1,
-    firstName: 'George',
-    lastName: 'Franklin',
-    address: '110 W. Liberty St.',
-    city: 'Madison',
-    telephone: '6085551023',
-    pets: null
-  };
-  let testOwners: Owner[];
-
-  beforeEach(waitForAsync(() => {
-    TestBed.configureTestingModule({
-    schemas: [NO_ERRORS_SCHEMA],
-    imports: [CommonModule, FormsModule, OwnerListComponent],
-    providers: [
+    await TestBed.configureTestingModule({
+      imports: [OwnerListComponent],
+      providers: [
         { provide: OwnerService, useValue: ownerService },
-        { provide: ActivatedRoute, useClass: ActivatedRouteStub },
         provideRouter([]),
-    ]
-})
-      .compileComponents();
-  }));
-
-  beforeEach(() => {
-    testOwners = [{
-      id: 1,
-      firstName: 'George',
-      lastName: 'Franklin',
-      address: '110 W. Liberty St.',
-      city: 'Madison',
-      telephone: '6085551023',
-      pets: [{
-        id: 1,
-        name: 'Leo',
-        birthDate: '2010-09-07',
-        type: {id: 1, name: 'cat'},
-        ownerId: null,
-        owner: null,
-        visits: null
-      }]
-    }];
+      ],
+    }).compileComponents();
 
     fixture = TestBed.createComponent(OwnerListComponent);
     component = fixture.componentInstance;
-    ownerService = fixture.debugElement.injector.get(OwnerService);
-    spy = spyOn(ownerService, 'getOwners')
-      .and.returnValue(of(testOwners));
-
-  });
-
-  it('should create OwnerListComponent', () => {
-    expect(component).toBeTruthy();
-  });
-
-  it('should call ngOnInit() method', () => {
+    router = TestBed.inject(Router);
     fixture.detectChanges();
-    expect(spy.calls.any()).toBe(true, 'getOwners called');
   });
 
+  it('should create', () => expect(component).toBeTruthy());
 
-  it(' should show full name after getOwners observable (async) ', () => {
-    fixture.detectChanges();
-    fixture.detectChanges();
-    de = fixture.debugElement.query(By.css('.ownerFullName'));
-    el = de.nativeElement;
-    expect(el.innerText).toBe((testOwner.firstName.toString() + ' ' + testOwner.lastName.toString()));
+  it('loads owners on init via getOwners()', () => {
+    expect(ownerService.getOwners).toHaveBeenCalled();
+    expect(component.owners()).toEqual(MOCK_OWNERS);
+    expect(component.isOwnersDataReceived()).toBe(true);
   });
 
+  it('searchByLastName() updates searchKey and calls searchOwners()', () => {
+    ownerService.searchOwners.mockReturnValue(of(MOCK_OWNERS));
+    component.searchByLastName('Doe');
+    fixture.detectChanges();
+    expect(ownerService.searchOwners).toHaveBeenCalledWith('Doe');
+  });
+
+  it('searchByLastName with empty string calls getOwners()', () => {
+    component.searchByLastName('Doe');
+    component.searchByLastName('');
+    fixture.detectChanges();
+    expect(ownerService.getOwners).toHaveBeenCalled();
+  });
+
+  it('onSelect() navigates to owner detail', () => {
+    const spy = vi.spyOn(router, 'navigate');
+    component.onSelect(MOCK_OWNERS[0]);
+    expect(spy).toHaveBeenCalledWith(['/owners', 1]);
+  });
+
+  it('addOwner() navigates to add owner page', () => {
+    const spy = vi.spyOn(router, 'navigate');
+    component.addOwner();
+    expect(spy).toHaveBeenCalledWith(['/owners/add']);
+  });
 });

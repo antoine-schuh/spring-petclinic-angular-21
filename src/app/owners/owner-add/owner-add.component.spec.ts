@@ -1,103 +1,127 @@
-/*
- *
- *  * Copyright 2016-2017 the original author or authors.
- *  *
- *  * Licensed under the Apache License, Version 2.0 (the "License");
- *  * you may not use this file except in compliance with the License.
- *  * You may obtain a copy of the License at
- *  *
- *  *      http://www.apache.org/licenses/LICENSE-2.0
- *  *
- *  * Unless required by applicable law or agreed to in writing, software
- *  * distributed under the License is distributed on an "AS IS" BASIS,
- *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  * See the License for the specific language governing permissions and
- *  * limitations under the License.
- *
- */
-
-/* tslint:disable:no-unused-variable */
-
-/**
- * @author Vitaliy Fedoriv
- */
-
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
-import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
-import { OwnerAddComponent } from './owner-add.component';
-import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
-import { OwnerService } from '../owner.service';
-import { RouterStub } from '../../testing/router-stubs';
-import { Owner } from '../owner';
-import { Observable, of } from 'rxjs';
-import { By } from '@angular/platform-browser';
-
-class OwnserServiceStub {
-  addOwner(owner: Owner): Observable<Owner> {
-    return of(owner);
-  }
-}
+import {ComponentFixture, TestBed} from '@angular/core/testing';
+import {provideRouter, Router} from '@angular/router';
+import {of, throwError} from 'rxjs';
+import {Owner} from '../owner';
+import {OwnerService} from '../owner.service';
+import {OwnerAddComponent} from './owner-add.component';
 
 describe('OwnerAddComponent', () => {
-  let component: OwnerAddComponent;
   let fixture: ComponentFixture<OwnerAddComponent>;
+  let component: OwnerAddComponent;
+  let ownerService: { addOwner: ReturnType<typeof vi.fn> };
   let router: Router;
-  beforeEach(
-    waitForAsync(() => {
-      TestBed.configureTestingModule({
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
-    imports: [FormsModule, OwnerAddComponent],
-    providers: [
-        { provide: OwnerService, useClass: OwnserServiceStub },
-        { provide: Router, useClass: RouterStub },
-    ],
-}).compileComponents();
-    })
-  );
 
-  beforeEach(
-    waitForAsync(() => {
-      TestBed.configureTestingModule({
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
-    imports: [FormsModule, OwnerAddComponent],
-    providers: [
-        { provide: OwnerService, useClass: OwnserServiceStub },
-        { provide: Router, useClass: RouterStub },
-    ],
-}).compileComponents();
-    })
-  );
+  beforeEach(async () => {
+    ownerService = {addOwner: vi.fn()};
 
-  beforeEach(() => {
+    await TestBed.configureTestingModule({
+      imports: [OwnerAddComponent],
+      providers: [
+        {provide: OwnerService, useValue: ownerService},
+        provideRouter([]),
+      ],
+    }).compileComponents();
+
     fixture = TestBed.createComponent(OwnerAddComponent);
     component = fixture.componentInstance;
+    router = TestBed.inject(Router);
     fixture.detectChanges();
-    router=TestBed.inject(Router);
-    spyOn(router,'navigate');
   });
 
-  it('should create OwnerAddComponent', () => {
+  it('should create', () => {
     expect(component).toBeTruthy();
   });
 
-  
+  describe('form', () => {
+    it('is invalid when empty', () => {
+      expect(component.form.invalid).toBe(true);
+    });
 
-  it('back button routing', () => {
-    let buttons = fixture.debugElement.queryAll(By.css('button'));
-    let backbutton = buttons[0];
-    backbutton.triggerEventHandler('click', null);
-    spyOn(component, 'gotoOwnersList').and.callThrough();
-    expect(router.navigate).toHaveBeenCalledWith(['/owners']);
+    it('is valid when all fields are correctly filled', () => {
+      fillForm();
+      expect(component.form.valid).toBe(true);
+    });
+
+    it('rejects non-letter firstName', () => {
+      component.firstNameCtrl.setValue('John1');
+      expect(component.firstNameCtrl.invalid).toBe(true);
+    });
+
+    it('rejects firstName longer than 30 chars', () => {
+      component.firstNameCtrl.setValue('A'.repeat(31));
+      expect(component.firstNameCtrl.invalid).toBe(true);
+    });
+
+    it('rejects non-digit telephone', () => {
+      component.telephoneCtrl.setValue('abc');
+      expect(component.telephoneCtrl.invalid).toBe(true);
+    });
+
+    it('rejects telephone longer than 20 digits', () => {
+      component.telephoneCtrl.setValue('1'.repeat(21));
+      expect(component.telephoneCtrl.invalid).toBe(true);
+    });
+
+    it('rejects address longer than 255 chars', () => {
+      component.addressCtrl.setValue('A'.repeat(256));
+      expect(component.addressCtrl.invalid).toBe(true);
+    });
   });
 
+  describe('onSubmit', () => {
+    beforeEach(() => fillForm());
 
-  it('add owner', () => {
-    let buttons = fixture.debugElement.queryAll(By.css('button'));
-    let addOwnerButton = buttons[1].nativeElement;
-    spyOn(component, 'onSubmit');
-    addOwnerButton.click();
-    expect(component.onSubmit).toHaveBeenCalled();
+    it('calls addOwner with form data', () => {
+      ownerService.addOwner.mockReturnValue(of({} as Owner));
+      component.onSubmit();
+      expect(ownerService.addOwner).toHaveBeenCalledWith(
+        expect.objectContaining({
+          firstName: 'John',
+          lastName: 'Doe',
+          address: '123 Main St',
+          city: 'Springfield',
+          telephone: '1234567890',
+        })
+      );
+    });
+
+    it('navigates to /owners on success', () => {
+      ownerService.addOwner.mockReturnValue(of({} as Owner));
+      const spy = vi.spyOn(router, 'navigate');
+      component.onSubmit();
+      expect(spy).toHaveBeenCalledWith(['/owners']);
+    });
+
+    it('sets errorMessage on error', () => {
+      ownerService.addOwner.mockReturnValue(throwError(() => 'Server error'));
+      component.onSubmit();
+      expect(component.errorMessage()).toBe('Server error');
+    });
   });
 
+  it('navigates to /owners when gotoOwnersList is called', () => {
+    const spy = vi.spyOn(router, 'navigate');
+    component.gotoOwnersList();
+    expect(spy).toHaveBeenCalledWith(['/owners']);
+  });
+
+  it('submit button is disabled when form is invalid', () => {
+    const button: HTMLButtonElement = fixture.nativeElement.querySelector('button[type="submit"]');
+    expect(button.disabled).toBe(true);
+  });
+
+  it('submit button is enabled when form is valid', () => {
+    fillForm();
+    fixture.detectChanges();
+    const button: HTMLButtonElement = fixture.nativeElement.querySelector('button[type="submit"]');
+    expect(button.disabled).toBe(false);
+  });
+
+  function fillForm() {
+    component.firstNameCtrl.setValue('John');
+    component.lastNameCtrl.setValue('Doe');
+    component.addressCtrl.setValue('123 Main St');
+    component.cityCtrl.setValue('Springfield');
+    component.telephoneCtrl.setValue('1234567890');
+  }
 });

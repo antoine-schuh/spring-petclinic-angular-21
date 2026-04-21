@@ -1,71 +1,61 @@
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
-import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
-import { Specialty } from '../specialty';
-import { SpecialtyAddComponent } from './specialty-add.component';
-import { SpecialtyService } from '../specialty.service';
-import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
-import { ActivatedRouteStub, RouterStub } from '../../testing/router-stubs';
-import { Observable, of } from 'rxjs';
-import Spy = jasmine.Spy;
+import {ComponentFixture, TestBed} from '@angular/core/testing';
+import {of, throwError} from 'rxjs';
+import {Specialty} from '../specialty';
+import {SpecialtyService} from '../specialty.service';
+import {SpecialtyAddComponent} from './specialty-add.component';
 
-class SpecialityServiceStub {
-  addSpecialty(specialty: Specialty): Observable<Specialty> {
-    return of();
-  }
-}
+const MOCK: Specialty = {id: 1, name: 'Radiology'};
 
 describe('SpecialtyAddComponent', () => {
-  let component: SpecialtyAddComponent;
   let fixture: ComponentFixture<SpecialtyAddComponent>;
-  let specialtyService: SpecialtyService;
-  let spy: Spy;
-  let testSpecialty: Specialty;
+  let component: SpecialtyAddComponent;
+  let specService: { addSpecialty: ReturnType<typeof vi.fn> };
 
-  beforeEach(
-    waitForAsync(() => {
-      TestBed.configureTestingModule({
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
-    imports: [FormsModule, SpecialtyAddComponent],
-    providers: [
-        { provide: SpecialtyService, useClass: SpecialityServiceStub },
-        { provide: Router, useClass: RouterStub },
-        { provide: ActivatedRoute, useClass: ActivatedRouteStub },
-    ],
-}).compileComponents();
-    })
-  );
-  beforeEach(
-    waitForAsync(() => {
-      TestBed.configureTestingModule({
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
-    imports: [FormsModule, SpecialtyAddComponent],
-    providers: [
-        { provide: SpecialtyService, useClass: SpecialityServiceStub },
-        { provide: Router, useClass: RouterStub },
-        { provide: ActivatedRoute, useClass: ActivatedRouteStub },
-    ],
-}).compileComponents();
-    })
-  );
+  beforeEach(async () => {
+    specService = {addSpecialty: vi.fn()};
 
-  beforeEach(() => {
+    await TestBed.configureTestingModule({
+      imports: [SpecialtyAddComponent],
+      providers: [{provide: SpecialtyService, useValue: specService}],
+    }).compileComponents();
+
     fixture = TestBed.createComponent(SpecialtyAddComponent);
     component = fixture.componentInstance;
-    testSpecialty = {
-      id: 1,
-      name: 'test',
-    };
-
-    specialtyService = fixture.debugElement.injector.get(SpecialtyService);
-    spy = spyOn(specialtyService, 'addSpecialty').and.returnValue(
-      of(testSpecialty)
-    );
-
     fixture.detectChanges();
   });
 
-  it('should create SpecialtyAddComponent', () => {
-    expect(component).toBeTruthy();
+  it('should create', () => expect(component).toBeTruthy());
+
+  it('form is invalid when empty', () => expect(component.form.invalid).toBe(true));
+
+  it('form is valid with correct name', () => {
+    component.nameCtrl.setValue('Radiology');
+    expect(component.form.valid).toBe(true);
+  });
+
+  describe('onSubmit', () => {
+    beforeEach(() => component.nameCtrl.setValue('Radiology'));
+
+    it('calls addSpecialty', () => {
+      specService.addSpecialty.mockReturnValue(of(MOCK));
+      component.onSubmit();
+      expect(specService.addSpecialty).toHaveBeenCalled();
+    });
+
+    it('emits newSpeciality and resets form on success', () => {
+      specService.addSpecialty.mockReturnValue(of(MOCK));
+      const emitted: Specialty[] = [];
+      const sub = component.newSpeciality.subscribe(s => emitted.push(s));
+      component.onSubmit();
+      expect(emitted).toEqual([MOCK]);
+      expect(component.form.value.name).toBeNull();
+      sub.unsubscribe();
+    });
+
+    it('sets errorMessage on error', () => {
+      specService.addSpecialty.mockReturnValue(throwError(() => 'Error'));
+      component.onSubmit();
+      expect(component.errorMessage()).toBe('Error');
+    });
   });
 });

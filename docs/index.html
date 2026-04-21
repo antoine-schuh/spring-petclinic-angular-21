@@ -32,7 +32,7 @@
 
 <h1 id="spring-petclinic-angular-build-status">Spring Petclinic Angular <a href="https://travis-ci.org/spring-petclinic/spring-petclinic-angular/"><img src="https://travis-ci.org/spring-petclinic/spring-petclinic-angular.png?branch=master" alt="Build Status" class="img-responsive"></a></h1>
 <h2 id="angular-frontend-for-spring-petclinic">Angular frontend for Spring Petclinic</h2>
-<p>Warning: <strong>client only</strong>. 
+                     <p>Warning: <strong>client only</strong>.
   Use REST API from backend <a href="https://github.com/spring-petclinic/spring-petclinic-rest">spring-petclinic-rest project</a>
   You need start backend server before start frontend application.</p>
 <h2 id="screenshot">Screenshot</h2>
@@ -107,7 +107,7 @@ You can see current dependencies in <a href="package.json">package.json</a> file
  . . .
   &lt;Directory /var/www/html&gt;
  . . .
- # 
+ #
  # AllowOverride controls what directives may be placed in .htaccess files.
  # It can be &quot;All&quot;, &quot;None&quot;, or any combination of the keywords:
  # Options FileInfo AuthConfig Limit
@@ -124,10 +124,10 @@ You can see current dependencies in <a href="package.json">package.json</a> file
 </ol>
 <p>sudo vi /var/www/html/petclinic/.htaccess</p>
 <p>Add the following line to the top of the file to activate the RewriteEngine, which instructs Apache to process any rules that follow:</p>
-<div><pre class="line-numbers"><code class="language-none">RewriteEngine On  
+                     <div><pre class="line-numbers"><code class="language-none">RewriteEngine On
 # If an existing asset or directory is requested go to it as it is
-RewriteCond %{DOCUMENT_ROOT}%{REQUEST_URI} -f [OR]  
-RewriteCond %{DOCUMENT_ROOT}%{REQUEST_URI} -d  
+RewriteCond %{DOCUMENT_ROOT}%{REQUEST_URI} -f [OR]
+RewriteCond %{DOCUMENT_ROOT}%{REQUEST_URI} -d
 RewriteRule ^ - [L]
 
 # If the requested resource doesn&#39;t exist, use index.html
@@ -139,29 +139,12 @@ RewriteRule ^ index.html  </code></pre></div><ol start="7">
 <li>Run app in browser: <a href="http://server_name/petclinic/">http://server_name/petclinic/</a></li>
 </ol>
 <h2 id="running-unit-tests">Running unit tests</h2>
-<p>Run <code>ng test</code> to execute the unit tests via <a href="https://karma-runner.github.io">Karma</a>.</p>
+                     <p>Run <code>ng test</code> to execute the unit tests.</p>
 <h2 id="running-end-to-end-tests">Running end-to-end tests</h2>
 <p>Run <code>ng e2e</code> to execute the end-to-end tests via <a href="http://www.protractortest.org/">Protractor</a>.
 Before running the tests make sure you are serving the app via <code>ng serve</code>.</p>
 <h2 id="further-help">Further help</h2>
 <p>To get more help on the Angular CLI use <code>ng help</code> or go check out the <a href="https://github.com/angular/angular-cli/blob/master/README.md">Angular CLI README</a>.</p>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                   
-
-
 
 
                    </div><div class="search-results">

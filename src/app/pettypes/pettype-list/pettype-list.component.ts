@@ -1,10 +1,10 @@
-import { Component, computed, inject, linkedSignal, signal } from '@angular/core';
-import { rxResource } from '@angular/core/rxjs-interop';
-import { PetType } from '../pettype';
-import { Router } from '@angular/router';
-import { PetTypeService } from '../pettype.service';
-import { FormsModule } from '@angular/forms';
-import { PettypeAddComponent } from '../pettype-add/pettype-add.component';
+import {Component, inject, signal} from '@angular/core';
+import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
+import {FormsModule} from '@angular/forms';
+import {Router} from '@angular/router';
+import {PetType} from '../pettype';
+import {PettypeAddComponent} from '../pettype-add/pettype-add.component';
+import {PetTypeService} from '../pettype.service';
 
 @Component({
   selector: 'app-pettype-list',
@@ -16,15 +16,20 @@ export class PettypeListComponent {
   private pettypeService = inject(PetTypeService);
   private router = inject(Router);
 
-  pettypeResource = rxResource<PetType[], void>({
-    stream: () => this.pettypeService.getPetTypes(),
-  });
-
-  pettypes = linkedSignal<PetType[]>(() => this.pettypeResource.value() ?? []);
-  isPetTypesDataReceived = computed(() => !this.pettypeResource.isLoading());
+  pettypes = signal<PetType[]>([]);
+  isPetTypesDataReceived = signal(false);
   errorMessage = '';
   responseStatus: number;
   isInsert = signal(false);
+
+  constructor() {
+    this.pettypeService.getPetTypes()
+      .pipe(takeUntilDestroyed())
+      .subscribe(pt => {
+        this.pettypes.set(pt);
+        this.isPetTypesDataReceived.set(true);
+      });
+  }
 
   deletePettype(pettype: PetType) {
     this.pettypeService.deletePetType(pettype.id.toString()).subscribe({
