@@ -11,7 +11,7 @@ export class OwnerService {
   private http = inject(HttpClient);
   private httpErrorHandler = inject(HttpErrorHandler);
 
-  entityUrl = environment.REST_API_URL + 'owners';
+  private readonly entityUrl = environment.REST_API_URL + 'owners';
 
   private readonly handlerError: HandleError;
 

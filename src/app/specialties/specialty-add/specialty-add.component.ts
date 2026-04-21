@@ -10,8 +10,8 @@ import {SpecialtyService} from '../specialty.service';
   imports: [ReactiveFormsModule],
 })
 export class SpecialtyAddComponent {
-  private specialtyService = inject(SpecialtyService);
-  private fb = inject(FormBuilder);
+  private readonly specialtyService = inject(SpecialtyService);
+  private readonly fb = inject(FormBuilder);
 
   errorMessage = signal('');
   newSpeciality = output<Specialty>();

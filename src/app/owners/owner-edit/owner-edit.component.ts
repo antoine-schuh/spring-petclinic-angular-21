@@ -12,10 +12,10 @@ import {OwnerService} from '../owner.service';
   imports: [ReactiveFormsModule],
 })
 export class OwnerEditComponent {
-  private ownerService = inject(OwnerService);
-  private route = inject(ActivatedRoute);
-  private router = inject(Router);
-  private fb = inject(FormBuilder);
+  private readonly ownerService = inject(OwnerService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly fb = inject(FormBuilder);
 
   private ownerId = this.route.snapshot.params.id;
 

@@ -15,10 +15,10 @@ import {VetService} from '../vet.service';
   imports: [ReactiveFormsModule, MatFormField, MatSelect, MatOption],
 })
 export class VetAddComponent {
-  private specialtyService = inject(SpecialtyService);
-  private vetService = inject(VetService);
-  private router = inject(Router);
-  private fb = inject(FormBuilder);
+  private readonly specialtyService = inject(SpecialtyService);
+  private readonly vetService = inject(VetService);
+  private readonly router = inject(Router);
+  private readonly fb = inject(FormBuilder);
 
   specialtiesList = signal<Specialty[]>([]);
   errorMessage = signal('');

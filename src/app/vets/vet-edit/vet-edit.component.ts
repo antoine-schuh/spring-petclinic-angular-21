@@ -1,4 +1,4 @@
-import {Component, inject, OnInit, signal} from '@angular/core';
+import {Component, inject, signal} from '@angular/core';
 import {FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators,} from '@angular/forms';
 import {MatFormField, MatOption, MatSelect} from '@angular/material/select';
 import {ActivatedRoute, Router} from '@angular/router';
@@ -19,12 +19,12 @@ import {VetService} from '../vet.service';
     MatOption,
   ],
 })
-export class VetEditComponent implements OnInit {
-  private formBuilder = inject(FormBuilder);
-  private specialtyService = inject(SpecialtyService);
-  private vetService = inject(VetService);
-  private route = inject(ActivatedRoute);
-  private router = inject(Router);
+export class VetEditComponent {
+  private readonly formBuilder = inject(FormBuilder);
+  private readonly specialtyService = inject(SpecialtyService);
+  private readonly vetService = inject(VetService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
   vetEditForm: FormGroup;
   idCtrl: FormControl;
@@ -39,6 +39,10 @@ export class VetEditComponent implements OnInit {
     this.vet = {} as Vet;
     this.specList = [] as Specialty[];
     this.buildForm();
+    this.specList = this.route.snapshot.data.specs;
+    this.vet = this.route.snapshot.data.vet;
+    this.vet.specialties = this.route.snapshot.data.vet.specialties;
+    this.initFormValues();
   }
 
   buildForm() {
@@ -71,18 +75,9 @@ export class VetEditComponent implements OnInit {
     this.specialtiesCtrl.setValue(this.vet.specialties);
   }
 
-  ngOnInit() {
-    // we use SpecResolver and VetResolver (get data before init component)
-    this.specList = this.route.snapshot.data.specs;
-    this.vet = this.route.snapshot.data.vet;
-    this.vet.specialties = this.route.snapshot.data.vet.specialties;
-    this.initFormValues();
-  }
-
   onSubmit(vet: Vet) {
     this.vetService.updateVet(vet.id.toString(), vet).subscribe({
-      next: (res) => {
-        console.log('update success');
+      next: () => {
         this.gotoVetList();
       },
       error: (error) => this.errorMessage.set(error as any),

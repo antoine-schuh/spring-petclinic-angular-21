@@ -11,9 +11,9 @@ import {OwnerService} from '../owner.service';
   imports: [ReactiveFormsModule],
 })
 export class OwnerAddComponent {
-  private ownerService = inject(OwnerService);
-  private router = inject(Router);
-  private fb = inject(FormBuilder);
+  private readonly ownerService = inject(OwnerService);
+  private readonly router = inject(Router);
+  private readonly fb = inject(FormBuilder);
 
   errorMessage = signal('');
 

@@ -12,9 +12,9 @@ import {OwnerService} from '../owner.service';
   imports: [PetListComponent],
 })
 export class OwnerDetailComponent {
-  private route = inject(ActivatedRoute);
-  private router = inject(Router);
-  private ownerService = inject(OwnerService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly ownerService = inject(OwnerService);
 
   private ownerId = this.route.snapshot.params.id;
 

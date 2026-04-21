@@ -13,13 +13,12 @@ import {PetTypeService} from '../pettype.service';
   imports: [FormsModule, PettypeAddComponent],
 })
 export class PettypeListComponent {
-  private pettypeService = inject(PetTypeService);
-  private router = inject(Router);
+  private readonly pettypeService = inject(PetTypeService);
+  private readonly router = inject(Router);
 
   pettypes = signal<PetType[]>([]);
   isPetTypesDataReceived = signal(false);
-  errorMessage = '';
-  responseStatus: number;
+  errorMessage = signal('');
   isInsert = signal(false);
 
   constructor() {
@@ -33,11 +32,10 @@ export class PettypeListComponent {
 
   deletePettype(pettype: PetType) {
     this.pettypeService.deletePetType(pettype.id.toString()).subscribe({
-      next: (response) => {
-        this.responseStatus = response;
+      next: () => {
         this.pettypes.update(v => v.filter(item => item.id !== pettype.id));
       },
-      error: (error) => (this.errorMessage = error as any),
+      error: (error) => this.errorMessage.set(error as any),
     });
   }
 

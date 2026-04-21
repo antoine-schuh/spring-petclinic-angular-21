@@ -13,8 +13,8 @@ import {OwnerService} from '../owner.service';
   imports: [FormsModule, RouterLinkActive, RouterLink],
 })
 export class OwnerListComponent {
-  private router = inject(Router);
-  private ownerService = inject(OwnerService);
+  private readonly router = inject(Router);
+  private readonly ownerService = inject(OwnerService);
 
   lastName = '';
   private searchKey = signal('');

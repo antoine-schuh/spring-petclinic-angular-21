@@ -11,11 +11,11 @@ import {PetService} from '../pet.service';
   imports: [VisitListComponent],
 })
 export class PetListComponent {
-  private router = inject(Router);
-  private petService = inject(PetService);
+  private readonly router = inject(Router);
+  private readonly petService = inject(PetService);
 
   pet = input.required<Pet>();
-  errorMessage = '';
+  errorMessage = signal('');
   deleteSuccess = signal(false);
 
   editPet(pet: Pet) {
@@ -27,7 +27,7 @@ export class PetListComponent {
       next: () => {
         this.deleteSuccess.set(true);
       },
-      error: (error) => (this.errorMessage = error as any),
+      error: (error) => this.errorMessage.set(error as any),
     });
   }
 

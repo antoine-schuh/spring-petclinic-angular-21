@@ -13,13 +13,12 @@ import {SpecialtyService} from '../specialty.service';
   imports: [FormsModule, SpecialtyAddComponent],
 })
 export class SpecialtyListComponent {
-  private specService = inject(SpecialtyService);
-  private router = inject(Router);
+  private readonly specService = inject(SpecialtyService);
+  private readonly router = inject(Router);
 
   specialties = signal<Specialty[]>([]);
   isSpecialitiesDataReceived = signal(false);
-  errorMessage = '';
-  responseStatus: number;
+  errorMessage = signal('');
   isInsert = signal(false);
 
   constructor() {
@@ -33,11 +32,10 @@ export class SpecialtyListComponent {
 
   deleteSpecialty(specialty: Specialty) {
     this.specService.deleteSpecialty(specialty.id.toString()).subscribe({
-      next: (response) => {
-        this.responseStatus = response;
+      next: () => {
         this.specialties.update(v => v.filter(item => item.id !== specialty.id));
       },
-      error: (error) => (this.errorMessage = error as any),
+      error: (error) => this.errorMessage.set(error as any),
     });
   }
 

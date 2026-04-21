@@ -13,12 +13,12 @@ export class SpecialtyService {
 
   private entityUrl = environment.REST_API_URL + 'specialties';
 
-  private handlerError: HandleError;
+  private readonly handlerError: HandleError;
 
   constructor() {
     const httpErrorHandler = this.httpErrorHandler;
 
-    this.handlerError = httpErrorHandler.createHandleError('OwnerService');
+    this.handlerError = httpErrorHandler.createHandleError('SpecialtyService');
   }
 
   getSpecialties(): Observable<Specialty[]> {

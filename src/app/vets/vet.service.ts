@@ -11,14 +11,14 @@ export class VetService {
   private http = inject(HttpClient);
   private httpErrorHandler = inject(HttpErrorHandler);
 
-  entityUrl = environment.REST_API_URL + 'vets';
+  private readonly entityUrl = environment.REST_API_URL + 'vets';
 
   private readonly handlerError: HandleError;
 
   constructor() {
     const httpErrorHandler = this.httpErrorHandler;
 
-    this.handlerError = httpErrorHandler.createHandleError('OwnerService');
+    this.handlerError = httpErrorHandler.createHandleError('VetService');
   }
 
   getVets(): Observable<Vet[]> {

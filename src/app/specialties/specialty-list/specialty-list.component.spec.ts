@@ -49,7 +49,7 @@ describe('SpecialtyListComponent', () => {
   it('deleteSpecialty() sets errorMessage on error', () => {
     specService.deleteSpecialty.mockReturnValue(throwError(() => 'Error'));
     component.deleteSpecialty(MOCK[0]);
-    expect(component.errorMessage).toBe('Error');
+    expect(component.errorMessage()).toBe('Error');
   });
 
   it('onNewSpecialty() appends specialty and closes insert form', () => {

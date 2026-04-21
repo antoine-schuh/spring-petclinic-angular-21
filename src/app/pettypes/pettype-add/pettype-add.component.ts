@@ -1,7 +1,7 @@
-import { Component, inject, output, signal } from '@angular/core';
-import { PetType } from '../pettype';
-import { PetTypeService } from '../pettype.service';
-import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
+import {Component, inject, output, signal} from '@angular/core';
+import {FormBuilder, FormControl, ReactiveFormsModule, Validators} from '@angular/forms';
+import {PetType} from '../pettype';
+import {PetTypeService} from '../pettype.service';
 
 @Component({
   selector: 'app-pettype-add',
@@ -10,8 +10,8 @@ import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angu
   imports: [ReactiveFormsModule],
 })
 export class PettypeAddComponent {
-  private pettypeService = inject(PetTypeService);
-  private fb = inject(FormBuilder);
+  private readonly pettypeService = inject(PetTypeService);
+  private readonly fb = inject(FormBuilder);
 
   newPetType = output<PetType>();
   errorMessage = signal('');

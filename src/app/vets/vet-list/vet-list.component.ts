@@ -10,13 +10,12 @@ import {VetService} from '../vet.service';
   styleUrls: ['./vet-list.component.css'],
 })
 export class VetListComponent {
-  private vetService = inject(VetService);
-  private router = inject(Router);
+  private readonly vetService = inject(VetService);
+  private readonly router = inject(Router);
 
   vets = signal<Vet[]>([]);
   isVetDataReceived = signal(false);
-  errorMessage = '';
-  responseStatus: number;
+  errorMessage = signal('');
 
   constructor() {
     this.vetService.getVets()
@@ -29,11 +28,10 @@ export class VetListComponent {
 
   deleteVet(vet: Vet) {
     this.vetService.deleteVet(vet.id.toString()).subscribe({
-      next: (response) => {
-        this.responseStatus = response;
+      next: () => {
         this.vets.update(v => v.filter(item => item.id !== vet.id));
       },
-      error: (error) => (this.errorMessage = error as any),
+      error: (error) => this.errorMessage.set(error as any),
     });
   }
 

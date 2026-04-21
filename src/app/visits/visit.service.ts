@@ -18,7 +18,7 @@ export class VisitService {
   constructor() {
     const httpErrorHandler = this.httpErrorHandler;
 
-    this.handlerError = httpErrorHandler.createHandleError('OwnerService');
+    this.handlerError = httpErrorHandler.createHandleError('VisitService');
   }
 
   getVisits(): Observable<Visit[]> {

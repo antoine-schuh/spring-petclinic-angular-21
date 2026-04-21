@@ -62,6 +62,6 @@ describe('PetListComponent', () => {
   it('deletePet() sets errorMessage on error', () => {
     petService.deletePet.mockReturnValue(throwError(() => 'Error'));
     component.deletePet(MOCK_PET);
-    expect(component.errorMessage).toBe('Error');
+    expect(component.errorMessage()).toBe('Error');
   });
 });

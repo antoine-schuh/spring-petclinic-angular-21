@@ -12,10 +12,10 @@ import {PetTypeService} from '../pettype.service';
   imports: [ReactiveFormsModule],
 })
 export class PettypeEditComponent {
-  private pettypeService = inject(PetTypeService);
-  private route = inject(ActivatedRoute);
-  private router = inject(Router);
-  private fb = inject(FormBuilder);
+  private readonly pettypeService = inject(PetTypeService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly fb = inject(FormBuilder);
 
   private pettypeId = this.route.snapshot.params.id;
 

@@ -27,12 +27,12 @@ import {PetService} from '../pet.service';
   ],
 })
 export class PetEditComponent {
-  private petService = inject(PetService);
-  private petTypeService = inject(PetTypeService);
-  private ownerService = inject(OwnerService);
-  private router = inject(Router);
-  private route = inject(ActivatedRoute);
-  private fb = inject(FormBuilder);
+  private readonly petService = inject(PetService);
+  private readonly petTypeService = inject(PetTypeService);
+  private readonly ownerService = inject(OwnerService);
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+  private readonly fb = inject(FormBuilder);
 
   private petId = +this.route.snapshot.params.id;
 

@@ -49,7 +49,7 @@ describe('PettypeListComponent', () => {
   it('deletePettype() sets errorMessage on error', () => {
     petTypeService.deletePetType.mockReturnValue(throwError(() => 'Error'));
     component.deletePettype(MOCK[0]);
-    expect(component.errorMessage).toBe('Error');
+    expect(component.errorMessage()).toBe('Error');
   });
 
   it('onNewPettype() appends pet type', () => {

@@ -28,12 +28,12 @@ import {VisitService} from '../visit.service';
   ],
 })
 export class VisitEditComponent {
-  private visitService = inject(VisitService);
-  private petService = inject(PetService);
-  private ownerService = inject(OwnerService);
-  private route = inject(ActivatedRoute);
-  private router = inject(Router);
-  private fb = inject(FormBuilder);
+  private readonly visitService = inject(VisitService);
+  private readonly petService = inject(PetService);
+  private readonly ownerService = inject(OwnerService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly fb = inject(FormBuilder);
 
   private visitId = this.route.snapshot.params.id as string;
 

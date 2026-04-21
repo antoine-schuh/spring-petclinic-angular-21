@@ -52,7 +52,7 @@ describe('VetListComponent', () => {
   it('deleteVet() sets errorMessage on error', () => {
     vetService.deleteVet.mockReturnValue(throwError(() => 'Error'));
     component.deleteVet(MOCK[0]);
-    expect(component.errorMessage).toBe('Error');
+    expect(component.errorMessage()).toBe('Error');
   });
 
   it('addVet() navigates to /vets/add', () => {

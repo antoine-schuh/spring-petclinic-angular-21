@@ -12,10 +12,10 @@ import {SpecialtyService} from '../specialty.service';
   imports: [ReactiveFormsModule],
 })
 export class SpecialtyEditComponent {
-  private specialtyService = inject(SpecialtyService);
-  private route = inject(ActivatedRoute);
-  private router = inject(Router);
-  private fb = inject(FormBuilder);
+  private readonly specialtyService = inject(SpecialtyService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly fb = inject(FormBuilder);
 
   private specId = this.route.snapshot.params.id;
 

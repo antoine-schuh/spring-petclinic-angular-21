@@ -62,6 +62,6 @@ describe('VisitListComponent', () => {
   it('deleteVisit() sets errorMessage on error', () => {
     visitService.deleteVisit.mockReturnValue(throwError(() => 'Error'));
     component.deleteVisit(MOCK[0]);
-    expect(component.errorMessage).toBe('Error');
+    expect(component.errorMessage()).toBe('Error');
   });
 });

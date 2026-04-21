@@ -1,4 +1,4 @@
-import {Component, computed, inject, input, linkedSignal} from '@angular/core';
+import {Component, computed, inject, input, linkedSignal, signal} from '@angular/core';
 import {Router} from '@angular/router';
 import {Visit} from '../visit';
 import {VisitService} from '../visit.service';
@@ -9,13 +9,13 @@ import {VisitService} from '../visit.service';
   styleUrls: ['./visit-list.component.css'],
 })
 export class VisitListComponent {
-  private router = inject(Router);
-  private visitService = inject(VisitService);
+  private readonly router = inject(Router);
+  private readonly visitService = inject(VisitService);
 
   visits = input<Visit[]>([]);
   localVisits = linkedSignal(() => this.visits() ?? []);
   noVisits = computed(() => this.localVisits().length === 0);
-  errorMessage = '';
+  errorMessage = signal('');
 
   editVisit(visit: Visit) {
     this.router.navigate(['/visits', visit.id, 'edit']);
@@ -26,7 +26,7 @@ export class VisitListComponent {
       next: () => {
         this.localVisits.update(v => v.filter(item => item.id !== visit.id));
       },
-      error: (error) => (this.errorMessage = error as any),
+      error: (error) => this.errorMessage.set(error as any),
     });
   }
 }

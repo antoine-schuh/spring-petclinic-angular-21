@@ -18,7 +18,7 @@ export class PetService {
   constructor() {
     const httpErrorHandler = this.httpErrorHandler;
 
-    this.handlerError = httpErrorHandler.createHandleError('OwnerService');
+    this.handlerError = httpErrorHandler.createHandleError('PetService');
   }
 
   getPets(): Observable<Pet[]> {

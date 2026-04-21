@@ -11,14 +11,14 @@ export class PetTypeService {
   private http = inject(HttpClient);
   private httpErrorHandler = inject(HttpErrorHandler);
 
-  entityUrl = environment.REST_API_URL + 'pettypes';
+  private readonly entityUrl = environment.REST_API_URL + 'pettypes';
 
   private readonly handlerError: HandleError;
 
   constructor() {
     const httpErrorHandler = this.httpErrorHandler;
 
-    this.handlerError = httpErrorHandler.createHandleError('OwnerService');
+    this.handlerError = httpErrorHandler.createHandleError('PetTypeService');
   }
 
   getPetTypes(): Observable<PetType[]> {
