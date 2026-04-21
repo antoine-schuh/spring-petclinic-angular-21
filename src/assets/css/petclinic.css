@@ -1,3 +1,222 @@
+/*
+ * Ported from petclinic.less + typography.less + header.less
+ *
+ * Variables reference:
+ *   spring-green:      #6db33f
+ *   spring-dark-green: #5fa134
+ *   spring-brown:      #34302d
+ *   spring-grey:       #838789
+ *   spring-light-grey: #f1f1f1
+ *   lighten(spring-brown, 3%): #3d3935
+ */
+
+/* ── Typography ─────────────────────────────────────────── */
+
+@font-face {
+  font-family: 'varela_roundregular';
+  src: url('../fonts/varela_round-webfont.eot');
+  src: url('../fonts/varela_round-webfont.eot?#iefix') format('embedded-opentype'),
+  url('../fonts/varela_round-webfont.woff') format('woff'),
+  url('../fonts/varela_round-webfont.ttf') format('truetype'),
+  url('../fonts/varela_round-webfont.svg#varela_roundregular') format('svg');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'montserratregular';
+  src: url('../fonts/montserrat-webfont.eot');
+  src: url('../fonts/montserrat-webfont.eot?#iefix') format('embedded-opentype'),
+  url('../fonts/montserrat-webfont.woff') format('woff'),
+  url('../fonts/montserrat-webfont.ttf') format('truetype'),
+  url('../fonts/montserrat-webfont.svg#montserratregular') format('svg');
+  font-weight: normal;
+  font-style: normal;
+}
+
+body, h1, h2, h3, p, input {
+  font-weight: 400;
+  font-family: "varela_roundregular", sans-serif;
+  color: #34302d;
+}
+
+body {
+  background-color: #f1f1f1;
+}
+
+h1 {
+  font-size: 24px;
+  line-height: 30px;
+  font-family: "montserratregular", sans-serif;
+  margin-bottom: 15px;
+}
+
+h2 {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 24px;
+  margin-bottom: 10px;
+  font-family: "montserratregular", sans-serif;
+}
+
+h3 {
+  font-size: 16px;
+  line-height: 24px;
+  margin-bottom: 10px;
+  font-weight: 700;
+}
+
+strong {
+  font-weight: 700;
+  font-family: "montserratregular", sans-serif;
+}
+
+/* ── Links ──────────────────────────────────────────────── */
+
+a {
+  color: #5fa134;
+}
+
+a:hover {
+  color: #5fa134;
+}
+
+/* ── Buttons ────────────────────────────────────────────── */
+
+/* Bootstrap 5 btn-secondary → map to original btn-default colors */
+.btn-secondary {
+  color: #f1f1f1;
+  background-color: #34302d;
+  border-color: #6db33f;
+  border-width: 2px;
+  transition: border 0.15s, background-color 0.15s;
+}
+
+.btn-secondary:hover,
+.btn-secondary:focus,
+.btn-secondary:active,
+.btn-secondary.active {
+  color: #f1f1f1;
+  background-color: #34302d;
+  border-color: #34302d;
+}
+
+.btn + .btn {
+  margin-left: 4px;
+}
+
+/* ── Tables ─────────────────────────────────────────────── */
+
+/* Use the same selector specificity as Bootstrap 5 to ensure override */
+.table > thead > tr > th {
+  background-color: #3d3935;
+  color: #f1f1f1;
+}
+
+.container-details-table th {
+  background-color: #3d3935;
+  color: #f1f1f1;
+}
+
+table td {
+  vertical-align: middle;
+}
+
+table td .progress {
+  margin-bottom: 0;
+}
+
+table td.action-column {
+  width: 1px;
+}
+
+/* ── Layout ─────────────────────────────────────────────── */
+
+.xd-container {
+  margin-top: 40px;
+  margin-bottom: 100px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+.table-filter {
+  background-color: #34302d;
+  padding: 9px 12px;
+}
+
+/* ── Navbar ─────────────────────────────────────────────── */
+
+.navbar {
+  background-color: #34302d;
+  border-top: 4px solid #6db33f;
+}
+
+.navbar a.navbar-brand {
+  background: url('../images/spring-logo-dataflow.png') -1px -1px no-repeat;
+  width: 229px;
+  height: 46px;
+  display: inline-block;
+  padding: 0;
+  margin: 12px 0 6px;
+  text-decoration: none;
+}
+
+.navbar a.navbar-brand span {
+  display: block;
+  width: 229px;
+  height: 46px;
+  background: url('../images/spring-logo-dataflow.png') -1px -48px no-repeat;
+  opacity: 0;
+  transition: opacity 0.12s ease-in-out;
+}
+
+.navbar a.navbar-brand:hover span {
+  opacity: 1;
+}
+
+/* ── Nav ────────────────────────────────────────────────── */
+
+/* Top-level nav links — match Bootstrap 5 specificity (.navbar-dark .navbar-nav .nav-link) */
+.navbar .navbar-nav .nav-link {
+  font-family: "montserratregular", sans-serif;
+  font-size: 14px;
+  text-transform: uppercase;
+  padding: 28px 20px;
+  color: #f1f1f1;
+  transition: all 0.15s;
+}
+
+.navbar .navbar-nav .nav-link:hover,
+.navbar .navbar-nav .nav-item:hover > .nav-link,
+.navbar .navbar-nav .nav-link.active {
+  color: #eeeeee;
+  background-color: #6db33f;
+}
+
+/* Dropdown panel */
+.navbar .dropdown-menu {
+  background-color: #34302d;
+  border: 1px solid #6db33f;
+  border-radius: 0;
+  padding: 0;
+}
+
+.navbar .dropdown-item {
+  font-family: "montserratregular", sans-serif;
+  font-size: 14px;
+  text-transform: uppercase;
+  color: #f1f1f1;
+  padding: 10px 20px;
+}
+
+.navbar .dropdown-item:hover,
+.navbar .dropdown-item:focus {
+  color: #eeeeee;
+  background-color: #6db33f;
+}
+
+/* ── Misc ───────────────────────────────────────────────── */
+
 [ng-cloak] { display: none; }
 
 .splash {
@@ -17,11 +236,11 @@
   margin: 30px 0 0;
 }
 
-table td { vertical-align: middle; }
-table td .progress { margin-bottom: 0; }
-table td.action-column { width: 1px; }
-
 .help-block { color: #b6afaa; }
+
+hr {
+  border-top: 1px dotted #34302d;
+}
 
 .myspinner {
   animation-name: spinner;
@@ -45,8 +264,6 @@ table td.action-column { width: 1px; }
   to   { -webkit-transform: rotate(360deg); }
 }
 
-hr { border-top: 1px dotted #34302d; }
-
 .alert-success { background-color: rgba(223,240,216,0.7); border-color: #d6e9c6; color: #3c763d; }
 .alert-success hr { border-top-color: #c9e2b3; }
 .alert-success .alert-link { color: #2b542c; }
@@ -63,6 +280,8 @@ hr { border-top: 1px dotted #34302d; }
 .alert-danger hr { border-top-color: #e4b9c0; }
 .alert-danger .alert-link { color: #843534; }
 
+/* ── Responsive ─────────────────────────────────────────── */
+
 @media (max-width: 768px) {
   .navbar-toggle { position: absolute; z-index: 9999; left: 0; top: 0; }
   .navbar a.navbar-brand {
@@ -71,6 +290,8 @@ hr { border-top: 1px dotted #34302d; }
     width: 148px;
     height: 50px;
     float: none;
+    background-image: url('../images/spring-logo-dataflow-mobile.png');
+    background-position: 0 center;
   }
   .navbar a.navbar-brand span { display: none; }
   .navbar { border-top-width: 0; }

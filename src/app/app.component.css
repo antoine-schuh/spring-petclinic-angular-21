@@ -14,12 +14,13 @@ div.navbar-header {
   padding: inherit;
 }
 
+
 .content-wrapper {
   min-height: calc(100% - 8rem);
 }
 
 .footer-wrapper {
-  background-color: #f8f9fa;
+  background-color: #f1f1f1;
   text-align: center;
   position: fixed;
   bottom: 0;
