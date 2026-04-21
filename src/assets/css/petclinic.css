@@ -107,6 +107,11 @@ a:hover {
 
 /* ── Tables ─────────────────────────────────────────────── */
 
+.table,
+.table > :not(caption) > * > * {
+  background-color: transparent;
+}
+
 /* Use the same selector specificity as Bootstrap 5 to ensure override */
 .table > thead > tr > th {
   background-color: #3d3935;
