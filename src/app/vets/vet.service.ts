@@ -1,10 +1,11 @@
 import {HttpClient} from '@angular/common/http';
 import {inject, Injectable} from '@angular/core';
-import {Observable} from 'rxjs';
+import {Observable, of} from 'rxjs';
 import {catchError} from 'rxjs/operators';
 import {environment} from '../../environments/environment';
 import {HandleError, HttpErrorHandler} from '../error.service';
 import {Vet} from './vet';
+import {VetTop} from './vet-top';
 
 @Injectable({ providedIn: 'root' })
 export class VetService {
@@ -19,6 +20,18 @@ export class VetService {
     const httpErrorHandler = this.httpErrorHandler;
 
     this.handlerError = httpErrorHandler.createHandleError('VetService');
+  }
+
+  getTopVets(): Observable<VetTop[]> {
+    // TODO: replace with real API call when endpoint is available
+    // return this.http
+    //   .get<VetTop[]>(this.entityUrl + '/top')
+    //   .pipe(catchError(this.handlerError('getTopVets', [])));
+    return of([
+      {id: 1, firstName: 'James', lastName: 'Carter', visitCount: 42, distinctPetCount: 31},
+      {id: 2, firstName: 'Helen', lastName: 'Leary', visitCount: 37, distinctPetCount: 28},
+      {id: 3, firstName: 'Linda', lastName: 'Douglas', visitCount: 29, distinctPetCount: 22},
+    ]);
   }
 
   getVets(): Observable<Vet[]> {

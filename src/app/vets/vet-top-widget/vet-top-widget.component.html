@@ -1,0 +1,23 @@
+@if (topVets().length > 0) {
+  <div class="vet-top-widget">
+    <h2>Top Veterinarians</h2>
+    <table class="table">
+      <thead>
+      <tr>
+        <th>Name</th>
+        <th>Visits handled</th>
+        <th>Distinct pets</th>
+      </tr>
+      </thead>
+      <tbody>
+        @for (vet of topVets(); track vet.id) {
+          <tr>
+            <td>{{ vet.firstName }} {{ vet.lastName }}</td>
+            <td>{{ vet.visitCount }}</td>
+            <td>{{ vet.distinctPetCount }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}
